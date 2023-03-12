@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <SDL3/SDL.h>
 
 #define ASSERT(_e, ...) if (!(_e)) { fprintf(stderr, __VA_ARGS__); exit(1);}
@@ -23,12 +24,19 @@ static struct {
 	SDL_Renderer *renderer;
 	u32 *pixels;
 	bool quit;
-};
+} state;
 
 int main(int argc, char *argv[]) {
-	ASSERT(
-		!SDL_Init(SDL_INIT_VIDEO),
-		"SDL failed to initialize: %s\n",
-		SDL_GetError()
-	)
-}
+	(void)argc;
+	(void)argv;
+
+	// Initialize SDL
+	ASSERT(!SDL_Init(SDL_INIT_VIDEO), "SDL failed to initialize: %s\n", SDL_GetError())
+
+	// Create the window
+	state.window = SDL_CreateWindow("W Renderer", 1280, 720, 0);
+	ASSERT(state.window, "SDL failed to create window: %s\n", SDL_GetError())
+
+	// Create the renderer
+	state.renderer = SDL_CreateRenderer(state.window, NULL, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+} 
