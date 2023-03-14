@@ -1,29 +1,17 @@
-#include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <SDL3/SDL.h>
+#include "types.h"
+#include "perspective.h"
+
+// CONSTANTS AND MACROS =======================================================
 
 #define ASSERT(_e, ...) if (!(_e)) { fprintf(stderr, __VA_ARGS__); exit(1);}
-
-typedef float    f32;
-typedef double   f64;
-typedef uint8_t  u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
-typedef int8_t   i8;
-typedef int16_t  i16;
-typedef int32_t  i32;
-typedef int64_t  i64;
-typedef size_t   usize;
-typedef ssize_t  isize;
-typedef struct { u32 x,y,z; } Pos;
-typedef struct { Pos center; u8 length; u32 color; } Cube;
-
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 720
+#define CROSSHAIR_SIZE 5
+
+// GLOBALS ====================================================================
 
 static struct {
 	SDL_Window *window;
@@ -39,6 +27,8 @@ static struct {
 
 static void render();
 
+// DRAWING FUNCTIONS ==========================================================
+
 static void verticalLine(int x, int y1, int y2, u32 color) {
 	if (y1 > y2) {
 		int tmp = y1;
@@ -51,19 +41,43 @@ static void verticalLine(int x, int y1, int y2, u32 color) {
 	}
 }
 
+static void horizontalLine(int y, int x1, int x2, u32 color) {
+	if (x1 > x2) {
+		int tmp = x1;
+		x1 = x2;
+		x2 = tmp;
+	}
+
+	for (int x = x1; x <= x2; x++) {
+		state.pixels[y * SCREEN_WIDTH + x] = color;
+	}
+}
+
+static void drawCrosshair() {
+	// Draw the crosshair
+	int centerX, centerY;
+	centerX = SCREEN_WIDTH / 2;
+	centerY = SCREEN_HEIGHT / 2;
+
+	verticalLine(centerX, centerY - CROSSHAIR_SIZE, centerY + CROSSHAIR_SIZE, 0xFFFFFFFF);
+	horizontalLine(centerY, centerX - CROSSHAIR_SIZE, centerX + CROSSHAIR_SIZE, 0xFFFFFFFF);
+}
+
 static void drawCube(Cube cube) {
 	// For now, ignore 3d
 	u32 lo_x, hi_x, lo_y, hi_y;
-	lo_x = cube.center.x - cube.length;
-	hi_x = cube.center.x + cube.length;
-	lo_y = cube.center.y - cube.length;
-	hi_y = cube.center.y + cube.length;
+	lo_x = (cube.center.x - cube.length) - state.camera.pos.x;
+	hi_x = (cube.center.x + cube.length) - state.camera.pos.x;
+	lo_y = (cube.center.z - cube.length) - state.camera.pos.z;
+	hi_y = (cube.center.z + cube.length) - state.camera.pos.z;
 
 	while (lo_x < hi_x) {
 		verticalLine(lo_x, lo_y, hi_y, cube.color);
 		lo_x++;
 	}
 }
+
+// SETUP FUNCTIONS ========================================================
 
 // Setup and Run the program
 int main(int argc, char *argv[]) {
@@ -129,8 +143,10 @@ int main(int argc, char *argv[]) {
 			state.camera.pos.y -= 1;
 		}
 
-		drawCube(((Cube) { center:  state.camera.pos, length: 10, color: 0xFF00FF00 }));
-		render();
+		drawCube(((Cube){ center: ((Pos){ x: 0, y: 0, z: (SCREEN_HEIGHT / 2) }), length: 10, color: 0xFFFF00AA })); // Add a debug cube
+
+		drawCrosshair(); // Draw the crosshair last so it is on top
+		render(); // Render the screen
 	}
 
 	// Cleanup and exit
@@ -141,6 +157,8 @@ int main(int argc, char *argv[]) {
     return 0;
 } 
 
+
+// RENDERING FUNCTIONS ========================================================
 
 // Render what is drawn in the pixel buffer to the screen
 static void render() {
