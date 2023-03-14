@@ -19,6 +19,8 @@ typedef int32_t  i32;
 typedef int64_t  i64;
 typedef size_t   usize;
 typedef ssize_t  isize;
+typedef struct { u32 x,y,z; } Pos;
+typedef struct { Pos center; u8 length; u32 color; } Cube;
 
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 720
@@ -29,6 +31,10 @@ static struct {
 	SDL_Texture *texture, *debug;
 	u32 *pixels;
 	bool quit;
+
+	struct {
+		Pos pos;
+	} camera;
 } state;
 
 static void render();
@@ -42,6 +48,20 @@ static void verticalLine(int x, int y1, int y2, u32 color) {
 
 	for (int y = y1; y <= y2; y++) {
 		state.pixels[y * SCREEN_WIDTH + x] = color;
+	}
+}
+
+static void drawCube(Cube cube) {
+	// For now, ignore 3d
+	u32 lo_x, hi_x, lo_y, hi_y;
+	lo_x = cube.center.x - cube.length;
+	hi_x = cube.center.x + cube.length;
+	lo_y = cube.center.y - cube.length;
+	hi_y = cube.center.y + cube.length;
+
+	while (lo_x < hi_x) {
+		verticalLine(lo_x, lo_y, hi_y, cube.color);
+		lo_x++;
 	}
 }
 
@@ -67,6 +87,9 @@ int main(int argc, char *argv[]) {
 	// Create the pixel buffer
 	state.pixels = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
 
+	// Center the Camera
+	state.camera.pos = (Pos) { x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT / 2, z: 0 };
+
 	// Main Render Loop
 	while (!state.quit) {
 		SDL_Event event;
@@ -91,13 +114,22 @@ int main(int argc, char *argv[]) {
 		const u8 *keys = SDL_GetKeyboardState(NULL);
 
 		if (keys[SDLK_RIGHT & 0xFFFF]) {
-			verticalLine(100, 100, 200, 0xFF0000FF);
+			state.camera.pos.x += 1;
 		}
 
 		if (keys[SDLK_LEFT & 0xFFFF]) {
-			verticalLine(100, 100, 200, 0xFF00FF00);
+			state.camera.pos.x -= 1;
 		}
 
+		if (keys[SDLK_UP & 0xFFFF]) {
+			state.camera.pos.y += 1;
+		}
+
+		if (keys[SDLK_DOWN & 0xFFFF]) {
+			state.camera.pos.y -= 1;
+		}
+
+		drawCube(((Cube) { center:  state.camera.pos, length: 10, color: 0xFF00FF00 }));
 		render();
 	}
 
