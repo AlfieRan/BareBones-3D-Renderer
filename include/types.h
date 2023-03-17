@@ -33,7 +33,7 @@ typedef struct { f32 a,b,c,d,e,f,g,h,i; } m3;
 // Complex Base types
 typedef struct { f32 raw, sin, cos; } Angle;
 typedef struct { Angle horizontal, vertical; m3 matrix; } Rotation;
-typedef struct { v3 position; v3 display; Rotation rotation; } Camera;
+typedef struct { v3 position; i32 displayOffset; v3 displayPos; Rotation rotation; } Camera;
 
 // Shapes
 typedef struct { v3 center; f32 length; u32 color; } Cube;

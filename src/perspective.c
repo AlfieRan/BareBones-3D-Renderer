@@ -21,12 +21,21 @@ m3 rotationMatrix(Angle horizontal, Angle vertical) {
 }
 
 
+v3 cameraDisplayPos(Camera camera) {
+	return (v3) {
+        camera.position.x + (camera.displayOffset * camera.rotation.horizontal.sin),
+        camera.position.y + (camera.displayOffset * camera.rotation.horizontal.cos),
+		camera.position.z
+    };
+}
+
 // Used to get a position relative to the camera
 v2 posToCamera(v3 position, Camera camera) {
 	vf3 tmp = matrixMult_vf3(camera.rotation.matrix, (v3) { position.x - camera.position.x, position.y - camera.position.y, position.z - camera.position.z });
-	f32 mult = camera.display.y / max(tmp.y, MINIMUM_DISTANCE);
+	f32 mult = camera.displayPos.y / max(tmp.y, MINIMUM_DISTANCE);
+	printf("\nMultipler (%lf) DisplayPos (%d, %d, %d) ", mult, camera.displayPos.x, camera.displayPos.y, camera.displayPos.z);
 	return (v2) {
-		(tmp.x * mult) + camera.display.x,
-		(tmp.y * mult) + camera.display.y
+		(tmp.x * mult) + camera.displayPos.x,
+		(tmp.y * mult) + camera.displayPos.y
 	};
 }

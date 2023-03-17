@@ -8,7 +8,7 @@
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 720
 #define CROSSHAIR_SIZE 5
-#define ROTATION_SPEED 0.1f
+#define ROTATION_SPEED 0.01f
 #define MOVEMENT_SPEED 0.1f
 
 // GLOBALS ====================================================================
@@ -55,6 +55,8 @@ static void drawLine(v3 a, v3 b, u32 color) {
 	// Get the positions of the two points on the screen
 	v2 mappedA = posToCamera(a, state.camera);
 	v2 mappedB = posToCamera(b, state.camera);
+
+	printf("\nposA: {%d, %d} posB: {%d, %d}", mappedA.x, mappedA.y, mappedB.x, mappedB.y);
 
 	// Now use y=mx+c to get a definition for the line
 	f32 m,c;
@@ -111,8 +113,10 @@ int main(int argc, char *argv[]) {
 	// Create the pixel buffer
 	state.pixels = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
 
-	// Center the Camera
-	state.camera.position = (v3) { x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT / 2, z: 0 };
+	// Setup the camera
+	state.camera.position = (v3) { x: SCREEN_WIDTH / 2, y: 0, z: SCREEN_HEIGHT / 2 };
+	state.camera.displayOffset = 10;
+	state.camera.displayPos = cameraDisplayPos(state.camera);
 
 	// Main Render Loop
 	while (!state.quit) {
@@ -151,6 +155,7 @@ int main(int argc, char *argv[]) {
 		state.camera.rotation.vertical.cos = cos(state.camera.rotation.vertical.raw);
 		state.camera.rotation.vertical.sin = sin(state.camera.rotation.vertical.raw);
 		state.camera.rotation.matrix = rotationMatrix(state.camera.rotation.horizontal, state.camera.rotation.vertical);
+		state.camera.displayPos = cameraDisplayPos(state.camera);
 		// TODO: Update the camera's display projection
 
 
@@ -170,7 +175,7 @@ int main(int argc, char *argv[]) {
             };
         }
 
-		drawLine((v3){ x:5, y:5, z:0 }, (v3){ 10, 10, 0 }, 0xFFFF00AA);
+		drawLine((v3){ 0, 50, 0 }, (v3){ 100, 50, 0 }, 0xFFFF00AA);
 
 		drawCrosshair(); // Draw the crosshair last so it is on top
 		render(); // Render the screen

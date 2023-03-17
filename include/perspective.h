@@ -8,5 +8,6 @@
 
 m3 rotationMatrix(Angle horizontal, Angle vertical);
 v2 posToCamera(v3 position, Camera camera);
+v3 cameraDisplayPos(Camera camera);
 
 #endif /* PERSPECTIVE_H__*/
