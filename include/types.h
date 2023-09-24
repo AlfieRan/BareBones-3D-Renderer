@@ -25,18 +25,37 @@ typedef ssize_t  isize;
 // Vectors and Matrices
 typedef struct { i32 x,y,z; } v3;
 typedef struct { i32 x,y; } v2;
+typedef struct { f32 x,y; } vf2;
 typedef struct { f32 x,y,z; } vf3;
 typedef struct { f32 a,b,c,d,e,f,g,h,i; } m3;
 
 #define vf3_to_v3(v) (v3) { (i32) v.x, (i32) v.y, (i32) v.z }
 
 // Complex Base types
+typedef struct { int change_x, change_y; } MouseMovement;
 typedef struct { f32 raw, sin, cos; } Angle;
-typedef struct { Angle horizontal, vertical; m3 matrix; } Rotation;
-typedef struct { v3 position; i32 displayOffset; v3 displayPos; Rotation rotation; } Camera;
+typedef struct { Angle horizontal, vertical; m3 matrix; } CameraRotation;
+typedef struct { f32 horizontal, vertical; } FOV;
+typedef struct { u16 horizontal, vertical; } SCREEN;
+typedef struct { v3 position; FOV fov; SCREEN screen; CameraRotation rotation; } Camera;
+
+typedef struct {
+	SDL_Window *window;
+	SDL_Renderer *renderer;
+	SDL_Texture *texture, *debug;
+	u32 *pixels;
+	bool quit;
+
+	MouseMovement mouse;
+	Camera camera;
+} State;
 
 // Shapes
 typedef struct { v3 center; f32 length; u32 color; } Cube;
+typedef struct { v3 center; f32 width; f32 height; Angle rotation; u32 color; } Plane;
 
+
+// Return types
+typedef struct { bool success; v2 position; } CameraPosResult;
 
 #endif /* TYPES_H__*/
