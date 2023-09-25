@@ -28,8 +28,8 @@ CameraPosResult posToCamera(v3 position, Camera camera) {
 	// printf("\n[POS TO CAMERA] Position: (%i, %i, %i), Camera: (%i, %i, %i)", position.x, position.y, position.z, camera.position.x, camera.position.y, camera.position.z);
 
 	vf3 CD = (vf3) {
-		camera.rotation.horizontal.cos * camera.rotation.vertical.cos,
-		camera.rotation.horizontal.sin * camera.rotation.vertical.cos,
+		(f32)(camera.rotation.horizontal.cos * camera.rotation.vertical.cos),
+		(f32)(camera.rotation.horizontal.sin * camera.rotation.vertical.cos),
 		camera.rotation.vertical.sin
 	};
 
@@ -47,13 +47,20 @@ CameraPosResult posToCamera(v3 position, Camera camera) {
 	));
 
 	double theta_vertical = acos((dot_vf2(
-		(vf2) { CD.x, CD.z },
-		(vf2) { CP.x, CP.z }
+		(vf2) { CD.y, CD.z },
+		(vf2) { CP.y, CP.z }
 	)) / (
-		product_vf2((vf2) { CD.x, CD.z }) * product_vf2((vf2) { CP.x, CP.z })
+		product_vf2((vf2) { CD.y, CD.z }) * product_vf2((vf2) { CP.y, CP.z })
 	));
 
-	if (theta_horizational > FOV_HORIZONTAL || isnan(theta_horizational) || theta_vertical > FOV_VERTICAL || isnan(theta_vertical)) {
+	if (isnan(theta_horizational) || isnan(theta_vertical)) {
+		// printf("\n\n[POS TO CAMERA] NAN: Horizontal: %lf, Vertical: %lf", theta_horizational, theta_vertical);
+		// printf("\n\n[POS TO CAMERA] NAN: Horizontal: %lf, Vertical: %lf", theta_horizational, theta_vertical);
+		// printf("\nCD: (%lf, %lf, %lf), CP: (%lf, %lf, %lf)", CD.x, CD.y, CD.z, CP.x, CP.y, CP.z);
+		return (CameraPosResult) { false, (v2) { 0, 0 } };
+	}
+
+	if (theta_horizational > FOV_HORIZONTAL || theta_vertical > FOV_VERTICAL) {
 		// printf("\n\n[POS TO CAMERA] OUT OF SCREEN: Horizontal: %lf, Vertical: %lf", theta_horizational, theta_vertical);
 		// printf("\nCD: (%lf, %lf, %lf), CP: (%lf, %lf, %lf)", CD.x, CD.y, CD.z, CP.x, CP.y, CP.z);
 		return (CameraPosResult) { false, (v2) { 0, 0 } };
@@ -65,6 +72,6 @@ CameraPosResult posToCamera(v3 position, Camera camera) {
 	double x = proportion_horizontal * camera.screen.horizontal;
 	double y = proportion_vertical * camera.screen.vertical;
 
-	// printf("\n\n[POS TO CAMERA] IN SCREEN: Horizontal: %lf, Vertical: %lf", theta_horizational, theta_vertical);
+	printf("\n[POS TO CAMERA] IN SCREEN: Rot [%lf, %lf], CP (%lf, %lf, %lf)", theta_horizational, theta_vertical, CP.x, CP.y, CP.z);
 	return (CameraPosResult) { true, (v2) { x, y } };
 }

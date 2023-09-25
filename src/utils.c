@@ -2,11 +2,11 @@
 #include "types.h"
 
 f32 dot_vf2(vf2 a, vf2 b) {
-	return a.x * b.x + a.y * b.y;
+	return (f32)((f32)(a.x * b.x) + (f32)(a.y * b.y));
 }
 
 f32 product_vf2(vf2 a) {
-	return sqrt(a.x * a.x + a.y * a.y);
+	return (f32)(sqrt((f32)((f32)(a.x * a.x) + (f32)(a.y * a.y))));
 }
 
 i32 dot_v2(v2 a, v2 b) {
@@ -15,6 +15,14 @@ i32 dot_v2(v2 a, v2 b) {
 
 i32 product_v2(v2 a) {
 	return sqrt(a.x * a.x + a.y * a.y);
+}
+
+f32 dot_vf3(vf3 a, vf3 b) {
+	return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+f32 product_vf3(vf3 a) {
+	return sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
 }
 
 m3 matrixMult_m3(m3 a, m3 b){
@@ -41,4 +49,8 @@ vf3 matrixMult_vf3(m3 a, v3 b){
 
 i32 distance_between_points(v3 a, v3 b) {
 	return sqrt(pow((a.x - b.x), 2) + pow((a.y - b.y), 2) + pow((a.z - b.z), 2));
+}
+
+bool insideScreen(v2 pos, Camera camera) {
+	return pos.x > 0 && pos.x < camera.screen.horizontal && pos.y > 0 && pos.y < camera.screen.vertical;
 }
