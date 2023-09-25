@@ -16,5 +16,6 @@ f32 product_vf3(vf3 a);
 m3 matrixMult_m3(m3 a, m3 b);
 vf3 matrixMult_vf3(m3 a, v3 b);
 bool insideScreen(v2 pos, Camera camera);
+char* getNumberBitMap(u8 num);
 
 #endif /* UTILS_H__*/

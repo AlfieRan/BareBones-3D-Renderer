@@ -6,7 +6,11 @@ f32 dot_vf2(vf2 a, vf2 b) {
 }
 
 f32 product_vf2(vf2 a) {
-	return (f32)(sqrt((f32)((f32)(a.x * a.x) + (f32)(a.y * a.y))));
+	return (f32)(
+		sqrt((f32)(
+			(f32)(a.x * a.x) + (f32)(a.y * a.y)
+		))
+	);
 }
 
 i32 dot_v2(v2 a, v2 b) {
@@ -53,4 +57,32 @@ i32 distance_between_points(v3 a, v3 b) {
 
 bool insideScreen(v2 pos, Camera camera) {
 	return pos.x > 0 && pos.x < camera.screen.horizontal && pos.y > 0 && pos.y < camera.screen.vertical;
+}
+
+char* getNumberBitMap(u8 num) {
+	if (num > 9) return NULL;
+	FILE *fp = fopen("./assets/num_chars.txt", "r");
+
+	if (fp == NULL) {
+        printf("Error: could not open the num_chars.txt file\n");
+        exit(1);
+    }
+
+	// Skip to the required line number in the file
+	u8 lineNumber = (num * 2) + 1;
+    char line[49];
+    for (int i = 0; i < lineNumber; i++) {
+        if (fgets(line, sizeof(line), fp) == NULL) {
+            printf("Invalid line number.\n");
+            fclose(fp);
+            return NULL;
+        }
+    }
+
+    // Close the file
+    fclose(fp);
+
+    // Remove newline character at the end of the line
+    line[strcspn(line, "\n")] = '\0';
+	return strdup(line);
 }

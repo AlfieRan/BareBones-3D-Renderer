@@ -143,6 +143,34 @@ static void drawCrosshair() {
 	horizontalLine(centerY, centerX - CROSSHAIR_SIZE, centerX + CROSSHAIR_SIZE, 0xFFFFFFFF);
 }
 
+static void drawSingleNumber(u8 number, v2 position) {
+	if (number > 9) return;
+	char* bitMap = getNumberBitMap(number);
+	if (bitMap == NULL) return;
+
+	for (int y = 0; y < 8; y++) {
+		for (int x = 0; x < 6; x++) {
+			if (bitMap[(y * 6) + x] == '1') {
+				state.pixels[(position.y - y) * SCREEN_WIDTH + (position.x + x)] = 0xFFFFFFFF;
+			}
+		}
+	}
+	free(bitMap);
+}
+
+static void drawNumber(u8 number, u8 digits, v2 position) {
+	u8 digitArray[digits];
+
+	for (int i = 0; i < digits; i++) {
+		digitArray[digits - i - 1] = number % 10;
+		number /= 10;
+	}
+
+	for (int i = 0; i < digits; i++) {
+		drawSingleNumber(digitArray[i], (v2) { position.x + (i * 6), position.y });
+	}
+}
+
 // SETUP FUNCTIONS ========================================================
 
 // Setup and Run the program
@@ -171,7 +199,7 @@ int main(int argc, char *argv[]) {
 	state.camera.position = (v3) { x: SCREEN_WIDTH / 2, y: 0, z: SCREEN_HEIGHT / 2 };
 	state.camera.fov = (FOV) { horizontal: 1, vertical: 1 };
 	state.camera.screen = (SCREEN) { horizontal: SCREEN_WIDTH, vertical: SCREEN_HEIGHT };
-	state.camera.rotation.horizontal = (Angle) { raw: 1.57079632679f, cos: 0, sin: 1 };
+	state.camera.rotation.horizontal = (Angle) { raw: 4.71238898038f, cos: 0, sin: -1 };
 	state.camera.rotation.vertical = (Angle) { raw: 0, cos: 1, sin: 0 };
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
@@ -216,24 +244,28 @@ int main(int argc, char *argv[]) {
 		const u8 *keys = SDL_GetKeyboardState(NULL);
 
 		// Update Rotation State
-		state.camera.rotation.horizontal.raw += state.mouse.change_x * ROTATION_SPEED * deltaTime;
-		state.camera.rotation.vertical.raw += state.mouse.change_y * ROTATION_SPEED * deltaTime;
-		if (state.camera.rotation.horizontal.raw > 2 * PI) {
-			state.camera.rotation.horizontal.raw -= 2 * PI;
-		} else if (state.camera.rotation.horizontal.raw < 0) {
-			state.camera.rotation.horizontal.raw += 2 * PI;
-		}
-		if (state.camera.rotation.vertical.raw > 2 * PI) {
-			state.camera.rotation.vertical.raw -= 2 * PI;
-		} else if (state.camera.rotation.vertical.raw < 0) {
-			state.camera.rotation.vertical.raw += 2 * PI;
+		state.camera.rotation.horizontal.raw -= state.mouse.change_x * ROTATION_SPEED * deltaTime;
+		// state.camera.rotation.vertical.raw -= state.mouse.change_y * ROTATION_SPEED * deltaTime;
+
+		// Clamp the rotation values, horizontal can rotate 360 degrees (2 pi radians)
+		// if (state.camera.rotation.horizontal.raw > 2 * PI) {
+		// 	state.camera.rotation.horizontal.raw -= 2 * PI;
+		// } else if (state.camera.rotation.horizontal.raw < 0) {
+		// 	state.camera.rotation.horizontal.raw += 2 * PI;
+		// }
+
+		// Clamp the rotation values, vetical can rotate 180 degrees (pi radians)
+		f32 halfPi = PI / 2;
+		if (state.camera.rotation.vertical.raw > halfPi) {
+			state.camera.rotation.vertical.raw = halfPi;
+		} else if (state.camera.rotation.vertical.raw < -halfPi) {
+			state.camera.rotation.vertical.raw = -halfPi;
 		}
 
 		state.camera.rotation.horizontal.cos = cos(state.camera.rotation.horizontal.raw);
 		state.camera.rotation.horizontal.sin = sin(state.camera.rotation.horizontal.raw);
 		state.camera.rotation.vertical.cos = cos(state.camera.rotation.vertical.raw);
 		state.camera.rotation.vertical.sin = sin(state.camera.rotation.vertical.raw);
-		state.camera.rotation.matrix = rotationMatrix(state.camera.rotation.horizontal, state.camera.rotation.vertical);
 
 		// printf("\n[MOUSE CAMERA] Horizontal: (raw: %lf, cos: %lf, sin: %lf), Vertical: (raw: %lf, cos: %lf, sin: %lf)", state.camera.rotation.horizontal.raw, state.camera.rotation.horizontal.cos, state.camera.rotation.horizontal.sin, state.camera.rotation.vertical.raw, state.camera.rotation.vertical.cos, state.camera.rotation.vertical.sin);
 		v3 movementThisFrame = (v3) { 0, 0, 0 };
@@ -297,13 +329,10 @@ int main(int argc, char *argv[]) {
 			};
 		}
 
-		// printf("\n[MOUSE CAMERA] Position: (%i, %i, %i)", state.camera.position.x, state.camera.position.y, state.camera.position.z);
+		drawTestCube((v3){ 100, 100, 0 }, 100, 0xFFFF00AA);
+		drawTestCube((v3){ 100, 200, 0 }, 100, 0xFF00FFAA);
 
-		// drawLine((v3){ 0, 10, SCREEN_HEIGHT / 2 }, (v3){ 100, 10, SCREEN_HEIGHT / 2 }, 0xFFFF00AA);
-		drawTestCube((v3){ 100, 100, 100 }, 100, 0xFFFF00AA);
-		drawTestCube((v3){ 100, 200, 100 }, 100, 0xFF00FFAA);
-		// drawTestSquare((v3){ 300, 300, 300 }, 100);
-
+		drawNumber(1000 / deltaTime, 4, (v2){ 10, SCREEN_HEIGHT - 10 }); // Draw the FPS
 		drawCrosshair(); // Draw the crosshair last so it is on top
 		render(); // Render the screen
 	}
