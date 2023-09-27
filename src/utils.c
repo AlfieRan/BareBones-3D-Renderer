@@ -1,14 +1,18 @@
 #include "utils.h"
 #include "types.h"
 
-f32 dot_vf2(vf2 a, vf2 b) {
-	return (f32)((f32)(a.x * b.x) + (f32)(a.y * b.y));
+f64 dot_vf2(vf2 a, vf2 b) {
+	return (f64)((f64)(a.x * b.x) + (f64)(a.y * b.y));
 }
 
-f32 product_vf2(vf2 a) {
-	return (f32)(
-		sqrt((f32)(
-			(f32)(a.x * a.x) + (f32)(a.y * a.y)
+f64 det_vf2(vf2 a, vf2 b) {
+	return (f64)((f64)(a.x * b.y) - (f64)(a.y * b.x));
+}
+
+f64 product_vf2(vf2 a) {
+	return (f64)(
+		sqrt((f64)(
+			(f64)(a.x * a.x) + (f64)(a.y * a.y)
 		))
 	);
 }
@@ -26,7 +30,7 @@ f32 dot_vf3(vf3 a, vf3 b) {
 }
 
 f32 product_vf3(vf3 a) {
-	return sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+	return sqrt((f64)((f64)(a.x * a.x) + (f64)(a.y * a.y) + (f64)(a.z * a.z)));
 }
 
 m3 matrixMult_m3(m3 a, m3 b){

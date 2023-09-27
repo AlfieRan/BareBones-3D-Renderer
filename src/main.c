@@ -2,17 +2,7 @@
 #include "utils.h"
 #include "perspective.h"
 
-// CONSTANTS AND MACROS =======================================================
 
-#define ASSERT(_e, ...) if (!(_e)) { fprintf(stderr, __VA_ARGS__); exit(1);}
-#define SCREEN_WIDTH 1280
-#define SCREEN_HEIGHT 720
-#define CROSSHAIR_SIZE 5
-#define ROTATION_SPEED 0.0001f
-#define MOVEMENT_SPEED 5
-
-#define GREEN 0xFF00FFAA
-#define PURPLE 0xFFFF00AA
 
 // GLOBALS ====================================================================
 
@@ -198,7 +188,7 @@ int main(int argc, char *argv[]) {
 	state.pixels = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
 
 	// Setup the camera
-	state.camera.position = (v3) { x: SCREEN_WIDTH / 2, y: 0, z: SCREEN_HEIGHT / 2 };
+	state.camera.position = (v3) { x: 0, y: 0, z: 0 };
 	state.camera.fov = (FOV) { horizontal: 1, vertical: 1 };
 	state.camera.screen = (SCREEN) { horizontal: SCREEN_WIDTH, vertical: SCREEN_HEIGHT };
 	state.camera.rotation.horizontal = (Angle) { raw: HALF_PI, cos: 0, sin: 1 };
@@ -338,6 +328,10 @@ int main(int argc, char *argv[]) {
 		drawTestCube((vf3){ 100, 400, 0 }, 100, GREEN);
 		drawTestCube((vf3){ 100, 200, -100 }, 100, PURPLE);
 		drawTestCube((vf3){ 100, 300, -100 }, 100, GREEN);
+		// drawLine((vf3){ 0, 0, 0 }, (vf3){ 0, 0, 100 }, PURPLE);
+		// drawLine((vf3){ 0, 0, 0 }, (vf3){ 0, 100, 0 }, GREEN);
+		// drawLine((vf3){ 0, 0, 0 }, (vf3){ 100, 0, 0 }, RED);
+
 
 		drawNumber(1000 / deltaTime, 4, (v2){ 10, SCREEN_HEIGHT - 10 }); // Draw the FPS
 		drawCrosshair(); // Draw the crosshair last so it is on top
