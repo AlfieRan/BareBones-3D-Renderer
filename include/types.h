@@ -17,6 +17,9 @@
 #define ROTATION_SPEED 0.0001f
 #define MOVEMENT_SPEED 5
 
+#define HALF_SCREEN_WIDTH (SCREEN_WIDTH / 2)
+#define HALF_SCREEN_HEIGHT (SCREEN_HEIGHT / 2)
+
 #define GREEN 0xFF00FFAA
 #define PURPLE 0xFFFF00AA
 #define RED 0xFF0000AA
@@ -45,6 +48,8 @@ typedef struct { i32 x,y; } v2;
 typedef struct { f64 x,y; } vf2;
 typedef struct { f64 x,y,z; } vf3;
 typedef struct { f32 a,b,c,d,e,f,g,h,i; } m3;
+typedef struct { f32 a,b,c,d; } m4_row;
+typedef struct { m4_row a,b,c,d; } m4;
 typedef struct { vf3 pos, dir; } Ray;
 typedef struct { f64 hor, ver; } Angle3D;
 
@@ -56,7 +61,7 @@ typedef struct { f32 raw, sin, cos; } Angle;
 typedef struct { Angle horizontal, vertical; m3 matrix; } CameraRotation;
 typedef struct { f32 horizontal, vertical; } FOV;
 typedef struct { u16 horizontal, vertical; } SCREEN;
-typedef struct { v3 position; FOV fov; SCREEN screen; CameraRotation rotation; } Camera;
+typedef struct { vf3 position; vf3 rotation; f64 screen_dist; } Camera;
 
 typedef struct {
 	SDL_Window *window;

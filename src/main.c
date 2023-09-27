@@ -37,18 +37,10 @@ void horizontalLine(int y, int x1, int x2, u32 color) {
 
 void drawLine(vf3 a, vf3 b, u32 color) {
 	// Get the positions of the two points on the screen
-	CameraPosResult mappedA = posToCamera(a, state.camera);
-	CameraPosResult mappedB = posToCamera(b, state.camera);
+	v2 posA = point_to_screen(state.camera.rotation, state.camera.position, state.camera.screen_dist, a);
+	v2 posB = point_to_screen(state.camera.rotation, state.camera.position, state.camera.screen_dist, b);
 
-	if (!mappedA.success || !mappedB.success) {
-		// printf("\nLine not on screen");
-		return;
-	}
-
-	v2 posA = mappedA.position;
-	v2 posB = mappedB.position;
-
-	// printf("\nposA: {%d, %d} posB: {%d, %d}", posA.x, posA.y, posB.x, posB.y);
+	printf("\nposA: {%d, %d} posB: {%d, %d}", posA.x, posA.y, posB.x, posB.y);
 
 	if (posA.x != posB.x) {
 		// Now use y=mx+c to get a definition for the line
@@ -58,12 +50,16 @@ void drawLine(vf3 a, vf3 b, u32 color) {
 		f32 c = (f32)(posA.y - (f32)(m * posA.x));
 	
 		// Now loop through the x values, mapping them to y values
-		int lo_x, hi_x, y;
-		lo_x =  min(posA.x, posB.x);
-		hi_x = max(posA.x, posB.x);
+		int lo_x, hi_x, raw_lo_x, raw_hi_x, y;
+		raw_lo_x = min(posA.x, posB.x);
+		raw_hi_x = max(posA.x, posB.x);
+		lo_x =  max(raw_lo_x, 0);
+		hi_x = min(raw_hi_x, SCREEN_WIDTH);
 		for (int x = lo_x; x <= hi_x; x++) {
 			y = (m * x) + c;
-			state.pixels[y * SCREEN_WIDTH + x] = color;
+			if (y > 0 && y < SCREEN_HEIGHT) {
+				state.pixels[y * SCREEN_WIDTH + x] = color;
+			}
 		}
 	} else {
 		// If the x values are the same, just draw a vertical line
@@ -188,11 +184,9 @@ int main(int argc, char *argv[]) {
 	state.pixels = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
 
 	// Setup the camera
-	state.camera.position = (v3) { x: 0, y: 0, z: 0 };
-	state.camera.fov = (FOV) { horizontal: 1, vertical: 1 };
-	state.camera.screen = (SCREEN) { horizontal: SCREEN_WIDTH, vertical: SCREEN_HEIGHT };
-	state.camera.rotation.horizontal = (Angle) { raw: HALF_PI, cos: 0, sin: 1 };
-	state.camera.rotation.vertical = (Angle) { raw: 0, cos: 1, sin: 0 };
+	state.camera.screen_dist = 1;
+	state.camera.position = (vf3) { 0, 0, 0 };
+	state.camera.rotation = (vf3) { 0, 0, 0 };
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
 	// Setup delta time
@@ -235,63 +229,40 @@ int main(int argc, char *argv[]) {
 
 		const u8 *keys = SDL_GetKeyboardState(NULL);
 
-		// Update Rotation State
-		state.camera.rotation.horizontal.raw -= state.mouse.change_x * ROTATION_SPEED * deltaTime;
-		// state.camera.rotation.vertical.raw -= state.mouse.change_y * ROTATION_SPEED * deltaTime;
-
-		// Clamp the rotation values, horizontal can rotate 360 degrees (2 pi radians)
-		if (state.camera.rotation.horizontal.raw > TWO_PI) {
-			printf("\n[MOUSE CAMERA] Resetting horizontal rotation");
-			state.camera.rotation.horizontal.raw -= TWO_PI;
-		} else if (state.camera.rotation.horizontal.raw < 0) {
-			state.camera.rotation.horizontal.raw += TWO_PI;
-		}
-
-		// Clamp the rotation values, vetical can rotate 180 degrees (pi radians)
-		f32 halfPi = PI / 2;
-		if (state.camera.rotation.vertical.raw > halfPi) {
-			state.camera.rotation.vertical.raw = halfPi;
-		} else if (state.camera.rotation.vertical.raw < -halfPi) {
-			state.camera.rotation.vertical.raw = -halfPi;
-		}
-
-		state.camera.rotation.horizontal.cos = cos(state.camera.rotation.horizontal.raw);
-		state.camera.rotation.horizontal.sin = sin(state.camera.rotation.horizontal.raw);
-		state.camera.rotation.vertical.cos = cos(state.camera.rotation.vertical.raw);
-		state.camera.rotation.vertical.sin = sin(state.camera.rotation.vertical.raw);
+		// TODO - update camera rotation
 
 		// printf("\n[MOUSE CAMERA] Horizontal: (raw: %lf, cos: %lf, sin: %lf), Vertical: (raw: %lf, cos: %lf, sin: %lf)", state.camera.rotation.horizontal.raw, state.camera.rotation.horizontal.cos, state.camera.rotation.horizontal.sin, state.camera.rotation.vertical.raw, state.camera.rotation.vertical.cos, state.camera.rotation.vertical.sin);
 		v3 movementThisFrame = (v3) { 0, 0, 0 };
 
 		if (keys[SDLK_UP & 0xFFFF] || keys[SDL_SCANCODE_W]) {
             v3 tmp = (v3) {
-                movementThisFrame.x + (MOVEMENT_SPEED * state.camera.rotation.horizontal.cos),
-                movementThisFrame.y + (MOVEMENT_SPEED * state.camera.rotation.horizontal.sin),
+                movementThisFrame.x + MOVEMENT_SPEED,
+                movementThisFrame.y + MOVEMENT_SPEED,
 				movementThisFrame.z
             };
 			movementThisFrame = tmp;
         } 
 		if (keys[SDLK_DOWN & 0xFFFF] || keys[SDL_SCANCODE_S]) {
             v3 tmp = (v3) {
-                movementThisFrame.x - (MOVEMENT_SPEED * state.camera.rotation.horizontal.cos),
-                movementThisFrame.y - (MOVEMENT_SPEED * state.camera.rotation.horizontal.sin),
-				movementThisFrame.z
+                movementThisFrame.x - MOVEMENT_SPEED,
+                movementThisFrame.y,
+				movementThisFrame.z - MOVEMENT_SPEED,
             };
 			movementThisFrame = tmp;
         }
 		if (keys[SDLK_LEFT & 0xFFFF] || keys[SDL_SCANCODE_A]) {
 			v3 tmp = (v3) {
-				movementThisFrame.x - (MOVEMENT_SPEED * state.camera.rotation.horizontal.sin),
-				movementThisFrame.y + (MOVEMENT_SPEED * state.camera.rotation.horizontal.cos),
-				movementThisFrame.z
+				movementThisFrame.x - MOVEMENT_SPEED,
+				movementThisFrame.y, 
+				movementThisFrame.z + MOVEMENT_SPEED,
 			};
 			movementThisFrame = tmp;
 		} 
 		if (keys[SDLK_RIGHT & 0xFFFF] || keys[SDL_SCANCODE_D]) {
 			v3 tmp = (v3) {
-				movementThisFrame.x + (MOVEMENT_SPEED * state.camera.rotation.horizontal.sin),
-				movementThisFrame.y - (MOVEMENT_SPEED * state.camera.rotation.horizontal.cos),
-				movementThisFrame.z
+				movementThisFrame.x + MOVEMENT_SPEED,
+				movementThisFrame.y,
+				movementThisFrame.z - MOVEMENT_SPEED,
 			};
 			movementThisFrame = tmp;
 		}
@@ -299,8 +270,8 @@ int main(int argc, char *argv[]) {
 		if (keys[SDL_SCANCODE_E]) {
 			v3 tmp = (v3) {
 				movementThisFrame.x,
-				movementThisFrame.y,
-				movementThisFrame.z + MOVEMENT_SPEED
+				movementThisFrame.y + MOVEMENT_SPEED,
+				movementThisFrame.z 
 			};
 			movementThisFrame = tmp;
 		}
@@ -308,26 +279,26 @@ int main(int argc, char *argv[]) {
 		if (keys[SDL_SCANCODE_Q]) {
 			v3 tmp = (v3) {
 				movementThisFrame.x,
-				movementThisFrame.y,
-				movementThisFrame.z - MOVEMENT_SPEED
+				movementThisFrame.y - MOVEMENT_SPEED,
+				movementThisFrame.z 
 			};
 			movementThisFrame = tmp;
 		}
 
 		if (movementThisFrame.x != 0 || movementThisFrame.y != 0 || movementThisFrame.z != 0) {
-			state.camera.position = (v3) {
+			state.camera.position = (vf3) {
 				state.camera.position.x + (movementThisFrame.x * deltaTime),
 				state.camera.position.y + (movementThisFrame.y * deltaTime),
 				state.camera.position.z + (movementThisFrame.z * deltaTime)
 			};
 		}
 
-		drawTestCube((vf3){ 100, 100, 0 }, 100, PURPLE);
-		drawTestCube((vf3){ 100, 200, 0 }, 100, GREEN);
-		drawTestCube((vf3){ 100, 300, 0 }, 100, PURPLE);
-		drawTestCube((vf3){ 100, 400, 0 }, 100, GREEN);
-		drawTestCube((vf3){ 100, 200, -100 }, 100, PURPLE);
-		drawTestCube((vf3){ 100, 300, -100 }, 100, GREEN);
+		drawTestCube((vf3){ 0, 0, 100 }, 100, PURPLE);
+		// drawTestCube((vf3){ 100, 200, 100 }, 100, GREEN);
+		// drawTestCube((vf3){ 100, 300, 100 }, 100, PURPLE);
+		// drawTestCube((vf3){ 100, 400, 100 }, 100, GREEN);
+		// drawTestCube((vf3){ 100, 200, 100 }, 100, PURPLE);
+		drawTestCube((vf3){ 100, 300, 100 }, 100, GREEN);
 		// drawLine((vf3){ 0, 0, 0 }, (vf3){ 0, 0, 100 }, PURPLE);
 		// drawLine((vf3){ 0, 0, 0 }, (vf3){ 0, 100, 0 }, GREEN);
 		// drawLine((vf3){ 0, 0, 0 }, (vf3){ 100, 0, 0 }, RED);
