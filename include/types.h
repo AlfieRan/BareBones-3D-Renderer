@@ -14,8 +14,9 @@
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 720
 #define CROSSHAIR_SIZE 5
-#define ROTATION_SPEED 0.0001f
+#define ROTATION_SPEED 0.001f
 #define MOVEMENT_SPEED 5
+#define VERTICAL_FOV 1
 
 #define HALF_SCREEN_WIDTH (SCREEN_WIDTH / 2)
 #define HALF_SCREEN_HEIGHT (SCREEN_HEIGHT / 2)
@@ -58,10 +59,10 @@ typedef struct { f64 hor, ver; } Angle3D;
 // Complex Base types
 typedef struct { int change_x, change_y; } MouseMovement;
 typedef struct { f32 raw, sin, cos; } Angle;
-typedef struct { Angle horizontal, vertical; m3 matrix; } CameraRotation;
+typedef struct { Angle x, y, z; } CameraRotation;
 typedef struct { f32 horizontal, vertical; } FOV;
 typedef struct { u16 horizontal, vertical; } SCREEN;
-typedef struct { vf3 position; vf3 rotation; f64 screen_dist; } Camera;
+typedef struct { vf3 position; CameraRotation rotation; f64 screen_dist; } Camera;
 
 typedef struct {
 	SDL_Window *window;

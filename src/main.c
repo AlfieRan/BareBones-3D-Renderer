@@ -37,8 +37,8 @@ void horizontalLine(int y, int x1, int x2, u32 color) {
 
 void drawLine(vf3 a, vf3 b, u32 color) {
 	// Get the positions of the two points on the screen
-	v2 posA = point_to_screen(state.camera.rotation, state.camera.position, state.camera.screen_dist, a);
-	v2 posB = point_to_screen(state.camera.rotation, state.camera.position, state.camera.screen_dist, b);
+	v2 posA = point_to_screen(state.camera, a);
+	v2 posB = point_to_screen(state.camera, b);
 
 	printf("\nposA: {%d, %d} posB: {%d, %d}", posA.x, posA.y, posB.x, posB.y);
 
@@ -186,7 +186,11 @@ int main(int argc, char *argv[]) {
 	// Setup the camera
 	state.camera.screen_dist = 1;
 	state.camera.position = (vf3) { 0, 0, 0 };
-	state.camera.rotation = (vf3) { 0, 0, 0 };
+	state.camera.rotation = (CameraRotation) { 
+		(Angle) { 0, 1, 0 },
+		(Angle) { 0, 1, 0 },
+		(Angle) { 0, 1, 0 }
+	};
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
 	// Setup delta time
@@ -209,6 +213,7 @@ int main(int argc, char *argv[]) {
 		// Clear the screen
 		memset(state.pixels, 0, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
 
+		// Handle events
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 				case SDL_EVENT_QUIT:
@@ -229,24 +234,46 @@ int main(int argc, char *argv[]) {
 
 		const u8 *keys = SDL_GetKeyboardState(NULL);
 
-		// TODO - update camera rotation
+		// Update Camera Rotation
+		state.camera.rotation.x.raw += state.mouse.change_y * ROTATION_SPEED;
+		state.camera.rotation.y.raw += state.mouse.change_x * ROTATION_SPEED;
+
+		// Clamp the rotation
+		if (state.camera.rotation.x.raw > VERTICAL_FOV) {
+			state.camera.rotation.x.raw = VERTICAL_FOV;
+		} else if (state.camera.rotation.x.raw < -VERTICAL_FOV) {
+			state.camera.rotation.x.raw = -VERTICAL_FOV;
+		}
+		if (state.camera.rotation.y.raw > TWO_PI) {
+			state.camera.rotation.y.raw -= TWO_PI;
+		} else if (state.camera.rotation.y.raw < 0) {
+			state.camera.rotation.y.raw += TWO_PI;
+		}
+		
+		// Update the sin and cos values
+		state.camera.rotation.x.sin = sin(state.camera.rotation.x.raw);
+		state.camera.rotation.x.cos = cos(state.camera.rotation.x.raw);
+		state.camera.rotation.y.sin = sin(state.camera.rotation.y.raw);
+		state.camera.rotation.y.cos = cos(state.camera.rotation.y.raw);
+		state.camera.rotation.z.sin = sin(state.camera.rotation.z.raw);
+		state.camera.rotation.z.cos = cos(state.camera.rotation.z.raw);
 
 		// printf("\n[MOUSE CAMERA] Horizontal: (raw: %lf, cos: %lf, sin: %lf), Vertical: (raw: %lf, cos: %lf, sin: %lf)", state.camera.rotation.horizontal.raw, state.camera.rotation.horizontal.cos, state.camera.rotation.horizontal.sin, state.camera.rotation.vertical.raw, state.camera.rotation.vertical.cos, state.camera.rotation.vertical.sin);
 		v3 movementThisFrame = (v3) { 0, 0, 0 };
 
 		if (keys[SDLK_UP & 0xFFFF] || keys[SDL_SCANCODE_W]) {
             v3 tmp = (v3) {
-                movementThisFrame.x + MOVEMENT_SPEED,
-                movementThisFrame.y + MOVEMENT_SPEED,
-				movementThisFrame.z
+                movementThisFrame.x,
+                movementThisFrame.y,
+				movementThisFrame.z + MOVEMENT_SPEED,
             };
 			movementThisFrame = tmp;
         } 
 		if (keys[SDLK_DOWN & 0xFFFF] || keys[SDL_SCANCODE_S]) {
             v3 tmp = (v3) {
-                movementThisFrame.x - MOVEMENT_SPEED,
+                movementThisFrame.x,
                 movementThisFrame.y,
-				movementThisFrame.z - MOVEMENT_SPEED,
+				movementThisFrame.z - MOVEMENT_SPEED
             };
 			movementThisFrame = tmp;
         }
@@ -254,7 +281,7 @@ int main(int argc, char *argv[]) {
 			v3 tmp = (v3) {
 				movementThisFrame.x - MOVEMENT_SPEED,
 				movementThisFrame.y, 
-				movementThisFrame.z + MOVEMENT_SPEED,
+				movementThisFrame.z,
 			};
 			movementThisFrame = tmp;
 		} 
@@ -262,7 +289,7 @@ int main(int argc, char *argv[]) {
 			v3 tmp = (v3) {
 				movementThisFrame.x + MOVEMENT_SPEED,
 				movementThisFrame.y,
-				movementThisFrame.z - MOVEMENT_SPEED,
+				movementThisFrame.z,
 			};
 			movementThisFrame = tmp;
 		}
@@ -287,9 +314,9 @@ int main(int argc, char *argv[]) {
 
 		if (movementThisFrame.x != 0 || movementThisFrame.y != 0 || movementThisFrame.z != 0) {
 			state.camera.position = (vf3) {
-				state.camera.position.x + (movementThisFrame.x * deltaTime),
-				state.camera.position.y + (movementThisFrame.y * deltaTime),
-				state.camera.position.z + (movementThisFrame.z * deltaTime)
+				state.camera.position.x + (movementThisFrame.x / deltaTime),
+				state.camera.position.y + (movementThisFrame.y / deltaTime),
+				state.camera.position.z + (movementThisFrame.z / deltaTime)
 			};
 		}
 

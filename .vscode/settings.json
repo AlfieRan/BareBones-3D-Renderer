@@ -1,0 +1,17 @@
+{
+	"files.associations": {
+		"sdl.h": "c",
+		"stdint.h": "c",
+		"perspective.h": "c",
+		"types.h": "c",
+		"random": "c",
+		"__node_handle": "c",
+		"complex": "c",
+		"cmath": "c",
+		"utils.h": "c",
+		"stdlib.h": "c",
+		"string.h": "c",
+		"chrono": "cpp",
+		"ratio": "cpp"
+	}
+}

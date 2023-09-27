@@ -59,10 +59,6 @@ i32 distance_between_points(v3 a, v3 b) {
 	return sqrt(pow((a.x - b.x), 2) + pow((a.y - b.y), 2) + pow((a.z - b.z), 2));
 }
 
-bool insideScreen(v2 pos, Camera camera) {
-	return pos.x > 0 && pos.x < camera.screen.horizontal && pos.y > 0 && pos.y < camera.screen.vertical;
-}
-
 char* getNumberBitMap(u8 num) {
 	if (num > 9) return NULL;
 	FILE *fp = fopen("./assets/num_chars.txt", "r");
