@@ -10,7 +10,9 @@
 #define CROSSHAIR_SIZE 5
 #define ROTATION_SPEED 0.0001f
 #define MOVEMENT_SPEED 5
-#define PI 3.14159265358979323846f
+
+#define GREEN 0xFF00FFAA
+#define PURPLE 0xFFFF00AA
 
 // GLOBALS ====================================================================
 
@@ -43,7 +45,7 @@ void horizontalLine(int y, int x1, int x2, u32 color) {
 	}
 }
 
-void drawLine(v3 a, v3 b, u32 color) {
+void drawLine(vf3 a, vf3 b, u32 color) {
 	// Get the positions of the two points on the screen
 	CameraPosResult mappedA = posToCamera(a, state.camera);
 	CameraPosResult mappedB = posToCamera(b, state.camera);
@@ -85,7 +87,7 @@ void drawLine(v3 a, v3 b, u32 color) {
 
 }
 
-void drawEmptyCube(v3 a, v3 b, v3 c, v3 d, v3 e, v3 f, v3 g, v3 h, u32 color) {
+void drawEmptyCube(vf3 a, vf3 b, vf3 c, vf3 d, vf3 e, vf3 f, vf3 g, vf3 h, u32 color) {
 	drawLine(a, b, color);
 	drawLine(a, c, color);
 	drawLine(a, e, color);
@@ -100,35 +102,35 @@ void drawEmptyCube(v3 a, v3 b, v3 c, v3 d, v3 e, v3 f, v3 g, v3 h, u32 color) {
 	drawLine(g, h, color);
 }
 
-void drawEmptySquare(v3 a, v3 b, v3 c, v3 d, u32 color) {
+void drawEmptySquare(vf3 a, vf3 b, vf3 c, vf3 d, u32 color) {
 	drawLine(a, b, color);
 	drawLine(a, c, color);
 	drawLine(b, d, color);
 	drawLine(c, d, color);
 }
 
-void drawTestSquare(v3 center, u32 length) {
+void drawTestSquare(vf3 center, u32 length) {
 	u32 h = length / 2;
 	drawEmptySquare(
-		(v3) { center.x - h, center.y, center.z + h },
-		(v3) { center.x + h, center.y, center.z + h },
-		(v3) { center.x - h, center.y, center.z - h },
-		(v3) { center.x + h, center.y, center.z - h },
+		(vf3) { center.x - h, center.y, center.z + h },
+		(vf3) { center.x + h, center.y, center.z + h },
+		(vf3) { center.x - h, center.y, center.z - h },
+		(vf3) { center.x + h, center.y, center.z - h },
 		0xFFFF00AA
 	);
 }
 
-void drawTestCube(v3 center, u32 length, u32 color) {
+void drawTestCube(vf3 center, u32 length, u32 color) {
 	u32 h = length / 2;
 	drawEmptyCube(
-		(v3) { center.x - h, center.y - h, center.z + h },
-		(v3) { center.x - h, center.y + h, center.z + h },
-		(v3) { center.x - h, center.y - h, center.z - h },
-		(v3) { center.x - h, center.y + h, center.z - h },
-		(v3) { center.x + h, center.y - h, center.z + h },
-		(v3) { center.x + h, center.y + h, center.z + h },
-		(v3) { center.x + h, center.y - h, center.z - h },
-		(v3) { center.x + h, center.y + h, center.z - h },
+		(vf3) { center.x - h, center.y - h, center.z + h },
+		(vf3) { center.x - h, center.y + h, center.z + h },
+		(vf3) { center.x - h, center.y - h, center.z - h },
+		(vf3) { center.x - h, center.y + h, center.z - h },
+		(vf3) { center.x + h, center.y - h, center.z + h },
+		(vf3) { center.x + h, center.y + h, center.z + h },
+		(vf3) { center.x + h, center.y - h, center.z - h },
+		(vf3) { center.x + h, center.y + h, center.z - h },
 		color
 	);
 } 
@@ -199,7 +201,7 @@ int main(int argc, char *argv[]) {
 	state.camera.position = (v3) { x: SCREEN_WIDTH / 2, y: 0, z: SCREEN_HEIGHT / 2 };
 	state.camera.fov = (FOV) { horizontal: 1, vertical: 1 };
 	state.camera.screen = (SCREEN) { horizontal: SCREEN_WIDTH, vertical: SCREEN_HEIGHT };
-	state.camera.rotation.horizontal = (Angle) { raw: 4.71238898038f, cos: 0, sin: -1 };
+	state.camera.rotation.horizontal = (Angle) { raw: HALF_PI, cos: 0, sin: 1 };
 	state.camera.rotation.vertical = (Angle) { raw: 0, cos: 1, sin: 0 };
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
@@ -248,11 +250,12 @@ int main(int argc, char *argv[]) {
 		// state.camera.rotation.vertical.raw -= state.mouse.change_y * ROTATION_SPEED * deltaTime;
 
 		// Clamp the rotation values, horizontal can rotate 360 degrees (2 pi radians)
-		// if (state.camera.rotation.horizontal.raw > 2 * PI) {
-		// 	state.camera.rotation.horizontal.raw -= 2 * PI;
-		// } else if (state.camera.rotation.horizontal.raw < 0) {
-		// 	state.camera.rotation.horizontal.raw += 2 * PI;
-		// }
+		if (state.camera.rotation.horizontal.raw > TWO_PI) {
+			printf("\n[MOUSE CAMERA] Resetting horizontal rotation");
+			state.camera.rotation.horizontal.raw -= TWO_PI;
+		} else if (state.camera.rotation.horizontal.raw < 0) {
+			state.camera.rotation.horizontal.raw += TWO_PI;
+		}
 
 		// Clamp the rotation values, vetical can rotate 180 degrees (pi radians)
 		f32 halfPi = PI / 2;
@@ -329,8 +332,12 @@ int main(int argc, char *argv[]) {
 			};
 		}
 
-		drawTestCube((v3){ 100, 100, 0 }, 100, 0xFFFF00AA);
-		drawTestCube((v3){ 100, 200, 0 }, 100, 0xFF00FFAA);
+		drawTestCube((vf3){ 100, 100, 0 }, 100, PURPLE);
+		drawTestCube((vf3){ 100, 200, 0 }, 100, GREEN);
+		drawTestCube((vf3){ 100, 300, 0 }, 100, PURPLE);
+		drawTestCube((vf3){ 100, 400, 0 }, 100, GREEN);
+		drawTestCube((vf3){ 100, 200, -100 }, 100, PURPLE);
+		drawTestCube((vf3){ 100, 300, -100 }, 100, GREEN);
 
 		drawNumber(1000 / deltaTime, 4, (v2){ 10, SCREEN_HEIGHT - 10 }); // Draw the FPS
 		drawCrosshair(); // Draw the crosshair last so it is on top

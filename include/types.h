@@ -8,6 +8,10 @@
 #ifndef TYPES_H__
 #define TYPES_H__
 
+#define PI 3.14159265358979323846f
+#define HALF_PI 1.57079632679489661923f
+#define TWO_PI 6.28318530717958647692f
+
 // Simple types
 typedef float    f32;
 typedef double   f64;

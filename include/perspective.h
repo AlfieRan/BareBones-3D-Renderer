@@ -4,6 +4,6 @@
 #define PERSPECTIVE_H__
 
 m3 rotationMatrix(Angle horizontal, Angle vertical);
-CameraPosResult posToCamera(v3 position, Camera camera);
+CameraPosResult posToCamera(vf3 position, Camera camera);
 
 #endif /* PERSPECTIVE_H__*/
