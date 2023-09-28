@@ -2,7 +2,19 @@
 #include "utils.h"
 #include "perspective.h"
 
-v2 point_to_screen(Camera camera, vf3 point) {
+bool is_in_front_of_camera(Camera camera, vf3 point) {
+	vf3 camera_to_point = (vf3) {
+		point.x - camera.position.x,
+		point.y - camera.position.y,
+		point.z - camera.position.z
+	};
+
+	f64 dot = camera.rotation.z.raw * product_vf3(camera_to_point);
+
+	return dot > 0;
+}
+
+ScreenPoint point_to_screen(Camera camera, vf3 point) {
 	f64 x = point.x - camera.position.x;
 	f64 y = point.y - camera.position.y;
 	f64 z = point.z - camera.position.z;
@@ -18,15 +30,14 @@ v2 point_to_screen(Camera camera, vf3 point) {
 	f64 screen_prop_x = (camera.screen_dist * d_x) / d_z;
 	f64 screen_prop_y = (camera.screen_dist  * d_y) / d_z;
 
-	// printf("\nscreen_prop_x: %f, screen_prop_y: %f", screen_prop_x, screen_prop_y);
-
 	f64 screen_x = (screen_prop_x + 1) * HALF_SCREEN_WIDTH;
-	// f64 screen_x = (d_z > 0 ? 1 : -1) * (screen_prop_x + 1) * HALF_SCREEN_WIDTH; // GPT-4
 	f64 screen_y = ((screen_prop_y * ASPECT_RATIO) + 1) * HALF_SCREEN_HEIGHT;
 
-	// printf("\nscreen_x: %f, screen_y: %f", screen_x, screen_y);
+	bool in_front = d_z > 0;
 
-	return (v2) { screen_x, screen_y };	
+	// printf("\n[INFO DUMP] point (%lf, %lf, %lf) dist (%lf, %lf, %lf) d_(%lf, %lf, %lf)\n\t\t prop (%lf, %lf) screen (%lf, %lf)", point.x, point.y, point.z, x, y, z, d_x, d_y, d_z, screen_prop_x, screen_prop_y, screen_x, screen_y);
+
+	return (ScreenPoint){(v2) { screen_x, screen_y }, in_front};
 }
 
 ClampPosition clamp_position(int a, int b, int minimum, int maximum) {
