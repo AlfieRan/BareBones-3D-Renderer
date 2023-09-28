@@ -2,18 +2,10 @@
 #include "utils.h"
 #include "perspective.h"
 
-#define DISPLAY_DISTANCE 1
-#define FOV_HORIZONTAL HALF_PI
-#define FOV_VERTICAL HALF_PI
-
-#define TWO_FOV_HORIZONTAL (FOV_HORIZONTAL * 2)
-#define TWO_FOV_VERTICAL (FOV_VERTICAL * 2)
-
-v2 point_to_screen(Camera camera,vf3 point) {
+v2 point_to_screen(Camera camera, vf3 point) {
 	f64 x = point.x - camera.position.x;
 	f64 y = point.y - camera.position.y;
 	f64 z = point.z - camera.position.z;
-
 
 	f64 sin_z_y_plus_cos_z_x = (camera.rotation.z.sin * y) + (camera.rotation.z.cos * x);
 	f64 cos_z_y_minus_sin_z_x = (camera.rotation.z.cos * y) - (camera.rotation.z.sin * x);
@@ -26,10 +18,32 @@ v2 point_to_screen(Camera camera,vf3 point) {
 	f64 screen_prop_x = (camera.screen_dist * d_x) / d_z;
 	f64 screen_prop_y = (camera.screen_dist  * d_y) / d_z;
 
-	f64 screen_x = (screen_prop_x + 1) * HALF_SCREEN_WIDTH;
-	f64 screen_y = (screen_prop_y + 1) * HALF_SCREEN_HEIGHT;
+	// printf("\nscreen_prop_x: %f, screen_prop_y: %f", screen_prop_x, screen_prop_y);
 
-	printf("\nx: %f, y: %f", screen_x, screen_y);
+	f64 screen_x = (screen_prop_x + 1) * HALF_SCREEN_WIDTH;
+	// f64 screen_x = (d_z > 0 ? 1 : -1) * (screen_prop_x + 1) * HALF_SCREEN_WIDTH; // GPT-4
+	f64 screen_y = ((screen_prop_y * ASPECT_RATIO) + 1) * HALF_SCREEN_HEIGHT;
+
+	// printf("\nscreen_x: %f, screen_y: %f", screen_x, screen_y);
 
 	return (v2) { screen_x, screen_y };	
+}
+
+ClampPosition clamp_position(int a, int b, int minimum, int maximum) {
+	int low = min(a, b);
+	int high = max(a, b);
+
+	if (low < minimum) {
+		low = minimum;
+	} else if (low > maximum) {
+		low = maximum;
+	}
+
+	if (high < minimum) {
+		high = minimum;
+	} else if (high > maximum) {
+		high = maximum;
+	}
+
+	return (ClampPosition) { low, high };
 }

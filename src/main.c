@@ -37,40 +37,61 @@ void horizontalLine(int y, int x1, int x2, u32 color) {
 
 void drawLine(vf3 a, vf3 b, u32 color) {
 	// Get the positions of the two points on the screen
+	// printf("\n[DRAW LINE] Getting position A");
 	v2 posA = point_to_screen(state.camera, a);
+	// printf("\n[DRAW LINE] Getting position B");
 	v2 posB = point_to_screen(state.camera, b);
 
-	printf("\nposA: {%d, %d} posB: {%d, %d}", posA.x, posA.y, posB.x, posB.y);
+	// printf("\n[DRAW LINE] posA: {%d, %d} posB: {%d, %d}", posA.x, posA.y, posB.x, posB.y);
 
-	if (posA.x != posB.x) {
+	if (posA.x == posB.x) {
+		// printf("[\nDRAW LINE] Drawing vertical line");
+		// If the x values are the same, just draw a vertical line
+		ClampPosition clamped = clamp_position(posA.y, posB.y, 0, SCREEN_HEIGHT - 1);
+		for (int y = clamped.low; y <= clamped.high; y++) {
+			state.pixels[y * SCREEN_WIDTH + posA.x] = color;
+		}
+
+	} else if (posA.y == posB.y) {
+		// printf("\n[DRAW LINE] Drawing horizontal line");
+		// If the y values are the same, just draw a horizontal line
+		ClampPosition clamped = clamp_position(posA.x, posB.x, 0, SCREEN_WIDTH - 1);
+		for (int x = clamped.low; x <= clamped.high; x++) {
+			state.pixels[posA.y * SCREEN_WIDTH + x] = color;
+		}
+
+	} else {
+		// printf("\n[DRAW LINE] Drawing non vertical line");
 		// Now use y=mx+c to get a definition for the line
 		// m = (y_b - y_a)/(x_b - x_a)
 		f32 m = (f32)((f32)(posB.y - posA.y) / (f32)(posB.x - posA.x));
 		// c = y - mx
 		f32 c = (f32)(posA.y - (f32)(m * posA.x));
 	
-		// Now loop through the x values, mapping them to y values
-		int lo_x, hi_x, raw_lo_x, raw_hi_x, y;
-		raw_lo_x = min(posA.x, posB.x);
-		raw_hi_x = max(posA.x, posB.x);
-		lo_x =  max(raw_lo_x, 0);
-		hi_x = min(raw_hi_x, SCREEN_WIDTH);
-		for (int x = lo_x; x <= hi_x; x++) {
-			y = (m * x) + c;
-			if (y > 0 && y < SCREEN_HEIGHT) {
-				state.pixels[y * SCREEN_WIDTH + x] = color;
+		if (fabs(m) > 1) {
+			// If the gradient is greater than 1, we need to loop through the y values
+			int x;
+			ClampPosition clamped = clamp_position(posA.y, posB.y, 0, SCREEN_HEIGHT - 1);
+			for (int y = clamped.low; y <= clamped.high; y++) {
+				x = (y - c) / m;
+				if (x > 0 && x < SCREEN_WIDTH) {
+					state.pixels[y * SCREEN_WIDTH + x] = color;
+				}
 			}
-		}
-	} else {
-		// If the x values are the same, just draw a vertical line
-		int lo_y, hi_y;
-		lo_y = min(posA.y, posB.y);
-		hi_y = max(posA.y, posB.y);
-		for (int y = lo_y; y <= hi_y; y++) {
-			state.pixels[y * SCREEN_WIDTH + posA.x] = color;
-		}
-	}
 
+		} else {
+			// Otherwise, we need to loop through the x values
+			int y;
+			ClampPosition clamped = clamp_position(posA.x, posB.x, 0, SCREEN_WIDTH - 1);
+			for (int x = clamped.low; x <= clamped.high; x++) {
+				y = (m * x) + c;
+				if (y > 0 && y < SCREEN_HEIGHT) {
+					state.pixels[y * SCREEN_WIDTH + x] = color;
+				}
+
+			}
+		};
+	}
 }
 
 void drawEmptyCube(vf3 a, vf3 b, vf3 c, vf3 d, vf3 e, vf3 f, vf3 g, vf3 h, u32 color) {
@@ -250,6 +271,8 @@ int main(int argc, char *argv[]) {
 			state.camera.rotation.y.raw += TWO_PI;
 		}
 		
+		// printf("\n\n[CAMERA] Rotation (%lf, %lf, %lf) \n", state.camera.rotation.x.raw, state.camera.rotation.y.raw, state.camera.rotation.z.raw);
+
 		// Update the sin and cos values
 		state.camera.rotation.x.sin = sin(state.camera.rotation.x.raw);
 		state.camera.rotation.x.cos = cos(state.camera.rotation.x.raw);
@@ -326,9 +349,9 @@ int main(int argc, char *argv[]) {
 		// drawTestCube((vf3){ 100, 400, 100 }, 100, GREEN);
 		// drawTestCube((vf3){ 100, 200, 100 }, 100, PURPLE);
 		drawTestCube((vf3){ 100, 300, 100 }, 100, GREEN);
-		// drawLine((vf3){ 0, 0, 0 }, (vf3){ 0, 0, 100 }, PURPLE);
-		// drawLine((vf3){ 0, 0, 0 }, (vf3){ 0, 100, 0 }, GREEN);
-		// drawLine((vf3){ 0, 0, 0 }, (vf3){ 100, 0, 0 }, RED);
+		drawLine((vf3){ 0, 0, 0 }, (vf3){ 0, 0, 10 }, BLUE);
+		drawLine((vf3){ 0, 0, 0 }, (vf3){ 0, 10, 0 }, GREEN);
+		drawLine((vf3){ 0, 0, 0 }, (vf3){ 10, 0, 0 }, RED);
 
 
 		drawNumber(1000 / deltaTime, 4, (v2){ 10, SCREEN_HEIGHT - 10 }); // Draw the FPS
