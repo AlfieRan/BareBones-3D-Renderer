@@ -55,6 +55,7 @@ typedef struct { f32 a,b,c,d; } m4_row;
 typedef struct { m4_row a,b,c,d; } m4;
 typedef struct { vf3 pos, dir; } Ray;
 typedef struct { f64 hor, ver; } Angle3D;
+typedef struct { vf3 a,b,c; u32 color; } Triangle;
 
 #define vf3_to_v3(v) (v3) { (i32) v.x, (i32) v.y, (i32) v.z }
 

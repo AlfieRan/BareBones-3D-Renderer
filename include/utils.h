@@ -7,6 +7,9 @@
 #define min(a,b) (((a) < (b)) ? (a) : (b));
 #define max(a,b) (((a) > (b)) ? (a) : (b));
 
+i32 min3(i32 a, i32 b, i32 c);
+i32 max3(i32 a, i32 b, i32 c);
+
 f64 dot_vf2(vf2 a, vf2 b);
 f64 det_vf2(vf2 a, vf2 b);
 f64 product_vf2(vf2 a);
@@ -17,5 +20,6 @@ f32 product_vf3(vf3 a);
 m3 matrixMult_m3(m3 a, m3 b);
 vf3 matrixMult_vf3(m3 a, v3 b);
 char* getNumberBitMap(u8 num);
+int clamp(int value, int minimum, int maximum);
 
 #endif /* UTILS_H__*/

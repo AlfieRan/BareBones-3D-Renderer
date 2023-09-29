@@ -1,6 +1,16 @@
 #include "utils.h"
 #include "types.h"
 
+i32 min3(i32 a, i32 b, i32 c) {
+	i32 minAB = min(a, b);
+	return min(minAB, c);
+}
+
+i32 max3(i32 a, i32 b, i32 c) {
+	i32 maxAB = max(a, b);
+	return max(maxAB, c);
+}
+
 f64 dot_vf2(vf2 a, vf2 b) {
 	return (f64)((f64)(a.x * b.x) + (f64)(a.y * b.y));
 }
@@ -85,4 +95,14 @@ char* getNumberBitMap(u8 num) {
     // Remove newline character at the end of the line
     line[strcspn(line, "\n")] = '\0';
 	return strdup(line);
+}
+
+int clamp(int value, int minimum, int maximum) {
+	if (value < minimum) {
+		return minimum;
+	} else if (value > maximum) {
+		return maximum;
+	}
+
+	return value;
 }

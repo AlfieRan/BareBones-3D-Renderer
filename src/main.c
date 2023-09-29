@@ -1,190 +1,13 @@
 #include "types.h"
 #include "utils.h"
 #include "perspective.h"
-
-
+#include "rendering.h"
+#include "ui.h"
 
 // GLOBALS ====================================================================
 
 static State state;
 static void render();
-
-// DRAWING FUNCTIONS ==========================================================
-
-void verticalLine(int x, int y1, int y2, u32 color) {
-	if (y1 > y2) {
-		int tmp = y1;
-		y1 = y2;
-		y2 = tmp;
-	}
-
-	for (int y = y1; y <= y2; y++) {
-		state.pixels[y * SCREEN_WIDTH + x] = color;
-	}
-}
-
-void horizontalLine(int y, int x1, int x2, u32 color) {
-	if (x1 > x2) {
-		int tmp = x1;
-		x1 = x2;
-		x2 = tmp;
-	}
-
-	for (int x = x1; x <= x2; x++) {
-		state.pixels[y * SCREEN_WIDTH + x] = color;
-	}
-}
-
-void drawLine(vf3 a, vf3 b, u32 color) {
-	// Get the positions of the two points on the screen
-	ScreenPoint pointA = point_to_screen(state.camera, a);
-	ScreenPoint pointB = point_to_screen(state.camera, b);
-
-	if (!pointA.in_front || !pointB.in_front) {
-		// If either of the points are behind the camera, don't draw the line
-		return;
-	}
-
-	v2 posA = pointA.pos;
-	v2 posB = pointB.pos;
-
-	// printf("\n[DRAW LINE] posA: {%d, %d} posB: {%d, %d}", posA.x, posA.y, posB.x, posB.y);
-
-	if (posA.x == posB.x) {
-		// printf("[\nDRAW LINE] Drawing vertical line");
-		// If the x values are the same, just draw a vertical line
-		ClampPosition clamped = clamp_position(posA.y, posB.y, 0, SCREEN_HEIGHT - 1);
-		for (int y = clamped.low; y <= clamped.high; y++) {
-			state.pixels[y * SCREEN_WIDTH + posA.x] = color;
-		}
-
-	} else if (posA.y == posB.y) {
-		// printf("\n[DRAW LINE] Drawing horizontal line");
-		// If the y values are the same, just draw a horizontal line
-		ClampPosition clamped = clamp_position(posA.x, posB.x, 0, SCREEN_WIDTH - 1);
-		for (int x = clamped.low; x <= clamped.high; x++) {
-			state.pixels[posA.y * SCREEN_WIDTH + x] = color;
-		}
-
-	} else {
-		// printf("\n[DRAW LINE] Drawing non vertical line");
-		// Now use y=mx+c to get a definition for the line
-		// m = (y_b - y_a)/(x_b - x_a)
-		f32 m = (f32)((f32)(posB.y - posA.y) / (f32)(posB.x - posA.x));
-		// c = y - mx
-		f32 c = (f32)(posA.y - (f32)(m * posA.x));
-	
-		if (fabs(m) > 1) {
-			// If the gradient is greater than 1, we need to loop through the y values
-			int x;
-			ClampPosition clamped = clamp_position(posA.y, posB.y, 0, SCREEN_HEIGHT - 1);
-			for (int y = clamped.low; y <= clamped.high; y++) {
-				x = (y - c) / m;
-				if (x > 0 && x < SCREEN_WIDTH) {
-					state.pixels[y * SCREEN_WIDTH + x] = color;
-				}
-			}
-
-		} else {
-			// Otherwise, we need to loop through the x values
-			int y;
-			ClampPosition clamped = clamp_position(posA.x, posB.x, 0, SCREEN_WIDTH - 1);
-			for (int x = clamped.low; x <= clamped.high; x++) {
-				y = (m * x) + c;
-				if (y > 0 && y < SCREEN_HEIGHT) {
-					state.pixels[y * SCREEN_WIDTH + x] = color;
-				}
-
-			}
-		};
-	}
-}
-
-void drawEmptyCube(vf3 a, vf3 b, vf3 c, vf3 d, vf3 e, vf3 f, vf3 g, vf3 h, u32 color) {
-	drawLine(a, b, color);
-	drawLine(a, c, color);
-	drawLine(a, e, color);
-	drawLine(b, f, color);
-	drawLine(b, d, color);
-	drawLine(c, g, color);
-	drawLine(c, d, color);
-	drawLine(d, h, color);
-	drawLine(e, f, color);
-	drawLine(e, g, color);
-	drawLine(f, h, color);
-	drawLine(g, h, color);
-}
-
-void drawEmptySquare(vf3 a, vf3 b, vf3 c, vf3 d, u32 color) {
-	drawLine(a, b, color);
-	drawLine(a, c, color);
-	drawLine(b, d, color);
-	drawLine(c, d, color);
-}
-
-void drawTestSquare(vf3 center, u32 length) {
-	u32 h = length / 2;
-	drawEmptySquare(
-		(vf3) { center.x - h, center.y, center.z + h },
-		(vf3) { center.x + h, center.y, center.z + h },
-		(vf3) { center.x - h, center.y, center.z - h },
-		(vf3) { center.x + h, center.y, center.z - h },
-		0xFFFF00AA
-	);
-}
-
-void drawTestCube(vf3 center, u32 length, u32 color) {
-	u32 h = length / 2;
-	drawEmptyCube(
-		(vf3) { center.x - h, center.y - h, center.z + h },
-		(vf3) { center.x - h, center.y + h, center.z + h },
-		(vf3) { center.x - h, center.y - h, center.z - h },
-		(vf3) { center.x - h, center.y + h, center.z - h },
-		(vf3) { center.x + h, center.y - h, center.z + h },
-		(vf3) { center.x + h, center.y + h, center.z + h },
-		(vf3) { center.x + h, center.y - h, center.z - h },
-		(vf3) { center.x + h, center.y + h, center.z - h },
-		color
-	);
-} 
-
-static void drawCrosshair() {
-	// Draw the crosshair
-	int centerX, centerY;
-	centerX = SCREEN_WIDTH / 2;
-	centerY = SCREEN_HEIGHT / 2;
-
-	verticalLine(centerX, centerY - CROSSHAIR_SIZE, centerY + CROSSHAIR_SIZE, 0xFFFFFFFF);
-	horizontalLine(centerY, centerX - CROSSHAIR_SIZE, centerX + CROSSHAIR_SIZE, 0xFFFFFFFF);
-}
-
-static void drawSingleNumber(u8 number, v2 position) {
-	if (number > 9) return;
-	char* bitMap = getNumberBitMap(number);
-	if (bitMap == NULL) return;
-
-	for (int y = 0; y < 8; y++) {
-		for (int x = 0; x < 6; x++) {
-			if (bitMap[(y * 6) + x] == '1') {
-				state.pixels[(position.y - y) * SCREEN_WIDTH + (position.x + x)] = 0xFFFFFFFF;
-			}
-		}
-	}
-	free(bitMap);
-}
-
-static void drawNumber(u8 number, u8 digits, v2 position) {
-	u8 digitArray[digits];
-
-	for (int i = 0; i < digits; i++) {
-		digitArray[digits - i - 1] = number % 10;
-		number /= 10;
-	}
-
-	for (int i = 0; i < digits; i++) {
-		drawSingleNumber(digitArray[i], (v2) { position.x + (i * 6), position.y });
-	}
-}
 
 // SETUP FUNCTIONS ========================================================
 
@@ -360,12 +183,17 @@ int main(int argc, char *argv[]) {
 		}
 
 		printf("\n[MAIN] Drawing Cubes");
-		drawTestCube((vf3){ 0, 0, 100 }, 100, PURPLE);
-		drawTestCube((vf3){ 100, 200, 100 }, 100, GREEN);
-		drawTestCube((vf3){ 100, 300, 100 }, 100, PURPLE);
-		drawTestCube((vf3){ 100, 400, 100 }, 100, GREEN);
-		drawTestCube((vf3){ 100, 200, 100 }, 100, PURPLE);
-		drawTestCube((vf3){ 100, 300, 100 }, 100, GREEN);
+		drawTestCube(state, (vf3){ 0, 0, 100 }, 100, PURPLE);
+		drawTestCube(state, (vf3){ 100, 200, 100 }, 100, GREEN);
+		drawTestCube(state, (vf3){ 100, 300, 100 }, 100, PURPLE);
+		drawTestCube(state, (vf3){ 100, 400, 100 }, 100, GREEN);
+		drawTestCube(state, (vf3){ 100, 200, 100 }, 100, PURPLE);
+		drawTestCube(state, (vf3){ 100, 300, 100 }, 100, GREEN);
+
+		// Draw a cube with a green outline
+		// drawSquare(state, (vf3){ 0, 0, 100 }, 3, RED);
+		drawCube(state, (vf3){ 100, 0, 100 }, 100, PURPLE);
+		drawTestCube(state, (vf3){ 100, 0, 100 }, 100, GREEN);
 
 		// Debug 3d compass
 		// drawLine((vf3){ 0, 0, 0 }, (vf3){ 0, 0, 10 }, BLUE);
@@ -373,10 +201,11 @@ int main(int argc, char *argv[]) {
 		// drawLine((vf3){ 0, 0, 0 }, (vf3){ 10, 0, 0 }, RED);
 
 		printf("\n[MAIN] Drawing UI");
-		drawNumber(1000 / deltaTime, 4, (v2){ 10, SCREEN_HEIGHT - 10 }); // Draw the FPS
-		drawCrosshair(); // Draw the crosshair last so it is on top
+		drawNumber(state, 1000 / deltaTime, 4, (v2){ 10, SCREEN_HEIGHT - 10 }); // Draw the FPS
+		drawCrosshair(state); // Draw the crosshair last so it is on top
 		printf("\n[MAIN] Rendering");
 		render(); // Render the screen
+		// state.quit = true;
 	}
 
 	// Cleanup and exit

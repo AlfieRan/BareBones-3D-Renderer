@@ -1,7 +1,6 @@
-#include "types.h"
-
 #ifndef PERSPECTIVE_H__
 #define PERSPECTIVE_H__
+#include "types.h"
 
 typedef struct { int low, high; } ClampPosition;
 typedef struct { v2 pos; bool in_front; } ScreenPoint;

@@ -43,18 +43,8 @@ ScreenPoint point_to_screen(Camera camera, vf3 point) {
 ClampPosition clamp_position(int a, int b, int minimum, int maximum) {
 	int low = min(a, b);
 	int high = max(a, b);
-
-	if (low < minimum) {
-		low = minimum;
-	} else if (low > maximum) {
-		low = maximum;
-	}
-
-	if (high < minimum) {
-		high = minimum;
-	} else if (high > maximum) {
-		high = maximum;
-	}
+	low = clamp(low, minimum, maximum);
+	high = clamp(high, minimum, maximum);
 
 	return (ClampPosition) { low, high };
 }

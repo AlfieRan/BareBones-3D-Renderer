@@ -12,6 +12,11 @@
 		"stdlib.h": "c",
 		"string.h": "c",
 		"chrono": "cpp",
-		"ratio": "cpp"
+		"ratio": "cpp",
+		"queue": "c",
+		"rendering.h": "c",
+		"ui.h": "c",
+		"locale": "c",
+		"string": "c"
 	}
 }
