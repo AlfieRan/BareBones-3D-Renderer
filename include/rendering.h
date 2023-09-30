@@ -13,10 +13,12 @@ void horizontalLine(State state, int y, int x1, int x2, u32 color);
 // Core 3D Drawing Functions
 void drawLine(State state, vf3 a, vf3 b, u32 color);
 void drawTriangle(State state, Triangle triangle);
+void draw2dCircle(State state, v2 center, u8 radius, u32 colour);
 void drawTriangles(State state, Triangle* triangles, usize trianglePointer);
 int compareTriangles(const void* A, const void* B);
 
 // Helper Functions
+bool insideScreen(v2 pos);
 void drawCubeMeshFromPoints(State state, vf3 a, vf3 b, vf3 c, vf3 d, vf3 e, vf3 f, vf3 g, vf3 h, u32 color);
 void drawSquareMeshFromPoints(State state, vf3 a, vf3 b, vf3 c, vf3 d, u32 color);
 void drawSquareFromPoints(State state, vf3 a, vf3 b, vf3 c, vf3 d, u32 color);

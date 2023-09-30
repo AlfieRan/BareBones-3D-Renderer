@@ -22,7 +22,6 @@ int main(int argc, char *argv[]) {
 
 	LOG("[MAIN] Starting Program", 0);
 
-
 	LOG("[MAIN] Initializing SDL", 1);
 	// Initialize SDL
 	ASSERT(!SDL_Init(SDL_INIT_VIDEO), "SDL failed to initialize: %s\n", SDL_GetError())
@@ -45,7 +44,7 @@ int main(int argc, char *argv[]) {
 	state.bitmap = getBitMap();
 	u16 numTriangles = TRIANGLE_BUFFER_SIZE;
 	Triangle* triangles = malloc(sizeof(Triangle) * numTriangles);
-	usize trainglesPointer = 0;
+	usize trianglesPointer = 0;
 
 
 	LOG("[MAIN] Setting up state", 0);
@@ -81,8 +80,8 @@ int main(int argc, char *argv[]) {
 		// Clear the buffers
 		memset(state.pixels, 0, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
 		numTriangles = TRIANGLE_BUFFER_SIZE;
-		trainglesPointer = 0;
-		triangles = realloc(triangles, sizeof(Triangle) * numTriangles);
+		trianglesPointer = 0;
+		memset(triangles, 0, sizeof(Triangle) * numTriangles);
 
 		// Handle events
 		LOG("[MAIN] Handling SDL events", 2);
@@ -201,23 +200,29 @@ int main(int argc, char *argv[]) {
 		}
 
 
-		LOG("[MAIN] Drawing Cube", 3);
+		LOG("[MAIN] Drawing Cube(s) to triangle buffer", 3);
 		int size = 10;
 		int h_size = size / 2;
 		for (int x = 0; x < size; x++) {
 			for (int y = 0; y < size; y++) {
 				u32 colour = (x + y) % 2 == 0 ? GREEN : PURPLE;
-				triangles_from_cube(state, (vf3){ (x - h_size + x*10), -30, (y - h_size + y*10) }, 5, (Material){ colour, state.camera.position, 100 }, triangles, &trainglesPointer, &numTriangles);
+				triangles_from_cube(state, (vf3){ (x - h_size + x*10), -30, (y - h_size + y*10) }, 5, (Material){ colour, state.camera.position, 100 }, triangles, &trianglesPointer, &numTriangles);
 			}
 		}
-	
-		LOG("[MAIN] Drawing UI & Triangles", 2);
-		drawTriangles(state, triangles, trainglesPointer);
+
+
+		// Start drawing to the screen
+		LOG("[MAIN] Getting Camera pointing", 2);
+		qsort(triangles, trianglesPointer + 1, sizeof(Triangle), compareTriangles); // sort back to front for rendering
+
+
+		LOG("[MAIN] Drawing Shapes & UI to screen", 2);
+		drawTriangles(state, triangles, trianglesPointer);
 		drawNumber(state, 1000 / deltaTime, 4, (v2){ 10, SCREEN_HEIGHT - 10 }); // Draw the FPS
 		drawCrosshair(state); // Draw the crosshair last so it is on top
+
 		LOG("[MAIN] Rendering", 2);
 		render(); // Render the screen
-		// state.quit = true;
 	}
 
 	// Cleanup and exit

@@ -111,7 +111,7 @@ BitMap* getBitMap() {
 			free(lines);
 			return NULL;
 		}
-
+			
 		line[strcspn(line, "\n")] = '\0';
 		strcpy((*lines)[i], line);
 	}

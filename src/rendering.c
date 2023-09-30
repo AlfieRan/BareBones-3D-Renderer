@@ -1,5 +1,7 @@
 #include "rendering.h"
 
+static bool debug = true;
+
 void verticalLine(State state, int x, int y1, int y2, u32 color) {
 	if (y1 > y2) {
 		int tmp = y1;
@@ -109,6 +111,30 @@ void drawLine(State state, vf3 a, vf3 b, u32 color) {
 	}
 }
 
+void draw2dCircle(State state, v2 center, u8 radius, u32 colour) {
+	// Draw a circle using the midpoint circle algorithm
+	// https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
+	int x = radius;
+	int y = 0;
+	int radiusError = 1 - x;
+
+	while (x >= y) {
+		verticalLine(state, center.x + x, center.y - y, center.y + y, colour);
+		verticalLine(state, center.x - x, center.y - y, center.y + y, colour);
+		verticalLine(state, center.x + y, center.y - x, center.y + x, colour);
+		verticalLine(state, center.x - y, center.y - x, center.y + x, colour);
+
+		y++;
+
+		if (radiusError < 0) {
+			radiusError += 2 * y + 1;
+		} else {
+			x--;
+			radiusError += 2 * (y - x + 1);
+		}
+	}
+}
+
 void drawTriangle(State state, Triangle triangle) {
 	LOG("[DRAW TRIANGLES] Getting Points to screen", 3);
 	ScreenPoint pointA = point_to_screen(state.camera, triangle.a);
@@ -163,6 +189,17 @@ void drawTriangle(State state, Triangle triangle) {
 			}
 		}
 	}
+
+	if (debug) {
+		LOG("[DRAW TRIANGLES] Drawing Debug Points", 3);
+		if (insideScreen(posA)) {draw2dCircle(state, posA, 3, RED);}
+		if (insideScreen(posB)) {draw2dCircle(state, posB, 3, RED);}
+		if (insideScreen(posC)) {draw2dCircle(state, posC, 3, RED);}
+	}
+}
+
+bool insideScreen(v2 pos) {
+	return pos.x > 0 && pos.x < SCREEN_WIDTH && pos.y > 0 && pos.y < SCREEN_HEIGHT;
 }
 
 int compareTriangles(const void* A, const void* B) {
@@ -179,8 +216,6 @@ int compareTriangles(const void* A, const void* B) {
 }
 
 void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
-	qsort(triangles, trianglePointer + 1, sizeof(Triangle), compareTriangles);
-
 	for (usize i = 0; i < trianglePointer; i++) {
 		Triangle triangle = triangles[i];
 		drawTriangle(state, triangle);

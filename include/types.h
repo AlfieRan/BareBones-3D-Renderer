@@ -31,6 +31,7 @@
 #define PURPLE 0xFFFF00AA
 #define RED 0xFF0000FF
 #define BLUE 0xFFFF0000
+#define YELLOW 0xFF00FFFF
 
 #define PI 3.14159265358979323846f
 #define HALF_PI 1.57079632679489661923f
@@ -63,7 +64,7 @@ typedef struct { m4_row a,b,c,d; } m4;
 typedef struct { u32 colour; vf3 closest_light; u32 colour_falloff; } Material;
 typedef struct { vf3 pos, dir; } Ray;
 typedef struct { f64 hor, ver; } Angle3D;
-typedef struct { vf3 a,b,c; Material material; f64 dist; } Triangle;
+typedef struct { vf3 a,b,c; Material material; f64 dist; bool highlighted; } Triangle;
 
 #define vf3_to_v3(v) (v3) { (i32) v.x, (i32) v.y, (i32) v.z }
 
