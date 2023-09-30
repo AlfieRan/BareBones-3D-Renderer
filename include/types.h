@@ -18,6 +18,7 @@
 #define MOVEMENT_SPEED 0.1f
 #define VERTICAL_FOV 1
 #define TRIANGLE_BUFFER_SIZE 1000
+#define CHUNK_SIZE 100
 
 #define BITS_PER_CHAR 48
 #define NUM_CHARS 10
@@ -62,7 +63,7 @@ typedef struct { m4_row a,b,c,d; } m4;
 typedef struct { u32 colour; vf3 closest_light; u32 colour_falloff; } Material;
 typedef struct { vf3 pos, dir; } Ray;
 typedef struct { f64 hor, ver; } Angle3D;
-typedef struct { vf3 a,b,c; Material material; } Triangle;
+typedef struct { vf3 a,b,c; Material material; f64 dist; } Triangle;
 
 #define vf3_to_v3(v) (v3) { (i32) v.x, (i32) v.y, (i32) v.z }
 

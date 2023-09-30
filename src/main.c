@@ -207,7 +207,7 @@ int main(int argc, char *argv[]) {
 		for (int x = 0; x < size; x++) {
 			for (int y = 0; y < size; y++) {
 				u32 colour = (x + y) % 2 == 0 ? GREEN : PURPLE;
-				triangles_from_cube((vf3){ (x - h_size + x*10), -30, (y - h_size + y*10) }, 5, (Material){ colour, state.camera.position, 100 }, triangles, &trainglesPointer, &numTriangles);
+				triangles_from_cube(state, (vf3){ (x - h_size + x*10), -30, (y - h_size + y*10) }, 5, (Material){ colour, state.camera.position, 100 }, triangles, &trainglesPointer, &numTriangles);
 			}
 		}
 	

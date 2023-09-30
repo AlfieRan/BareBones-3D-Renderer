@@ -165,7 +165,22 @@ void drawTriangle(State state, Triangle triangle) {
 	}
 }
 
+int compareTriangles(const void* A, const void* B) {
+	Triangle triA = *(const Triangle*) A;
+	Triangle triB = *(const Triangle*) B;
+
+	if (triA.dist > triB.dist) {
+		return -1;
+	} else if (triA.dist < triB.dist) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
 void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
+	qsort(triangles, trianglePointer + 1, sizeof(Triangle), compareTriangles);
+
 	for (usize i = 0; i < trianglePointer; i++) {
 		Triangle triangle = triangles[i];
 		drawTriangle(state, triangle);
@@ -220,8 +235,8 @@ void drawSquareFromPoints(State state, vf3 a, vf3 b, vf3 c, vf3 d, u32 color) {
 	LOG("Assigning Square Material", 3);
 	Material material = (Material) { color, state.camera.position, 100 };
 	LOG("Drawing Triangles", 3);
-	drawTriangle(state, (Triangle) { a, b, c, material });
-	drawTriangle(state, (Triangle) { b, c, d, material });
+	drawTriangle(state, (Triangle) { a, b, c, material, getTriangleDist(a,b,c,state.camera.position) });
+	drawTriangle(state, (Triangle) { b, c, d, material, getTriangleDist(b,c,d,state.camera.position) });
 }
 
 void drawSquare(State state, vf3 center, u32 length, u32 color) {

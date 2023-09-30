@@ -18,6 +18,7 @@
 		"ui.h": "c",
 		"locale": "c",
 		"string": "c",
-		"stdbool.h": "c"
+		"stdbool.h": "c",
+		"triangulation.h": "c"
 	}
 }
