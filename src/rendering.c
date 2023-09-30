@@ -165,25 +165,32 @@ void drawTriangle(State state, Triangle triangle) {
 	}
 }
 
-void drawEmptyCube(State state, vf3 a, vf3 b, vf3 c, vf3 d, vf3 e, vf3 f, vf3 g, vf3 h, u32 color) {
-	drawEmptySquare(state, a, b, c, d, color);
-	drawEmptySquare(state, e, f, g, h, color);
+void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
+	for (usize i = 0; i < trianglePointer; i++) {
+		Triangle triangle = triangles[i];
+		drawTriangle(state, triangle);
+	}
+}
+
+void drawCubeMeshFromPoints(State state, vf3 a, vf3 b, vf3 c, vf3 d, vf3 e, vf3 f, vf3 g, vf3 h, u32 color) {
+	drawSquareMeshFromPoints(state, a, b, c, d, color);
+	drawSquareMeshFromPoints(state, e, f, g, h, color);
 	drawLine(state, a, e, color);
 	drawLine(state, b, f, color);
 	drawLine(state, c, g, color);
 	drawLine(state, d, h, color);
 }
 
-void drawEmptySquare(State state, vf3 a, vf3 b, vf3 c, vf3 d, u32 color) {
+void drawSquareMeshFromPoints(State state, vf3 a, vf3 b, vf3 c, vf3 d, u32 color) {
 	drawLine(state, a, b, color);
 	drawLine(state, a, c, color);
 	drawLine(state, b, d, color);
 	drawLine(state, c, d, color);
 }
 
-void drawTestSquare(State state, vf3 center, u32 length) {
+void drawSquareMesh(State state, vf3 center, u32 length) {
 	u32 h = length / 2;
-	drawEmptySquare(
+	drawSquareMeshFromPoints(
 		state,
 		(vf3) { center.x - h, center.y, center.z + h },
 		(vf3) { center.x + h, center.y, center.z + h },
@@ -193,9 +200,9 @@ void drawTestSquare(State state, vf3 center, u32 length) {
 	);
 }
 
-void drawTestCube(State state, vf3 center, u32 length, u32 color) {
+void drawCubeMesh(State state, vf3 center, u32 length, u32 color) {
 	u32 h = length / 2;
-	drawEmptyCube(
+	drawCubeMeshFromPoints(
 		state,
 		(vf3) { center.x - h, center.y - h, center.z + h },
 		(vf3) { center.x - h, center.y + h, center.z + h },

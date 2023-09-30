@@ -3,6 +3,7 @@
 #include "perspective.h"
 #include "rendering.h"
 #include "ui.h"
+#include "triangulation.h"
 
 // GLOBALS ====================================================================
 
@@ -38,9 +39,14 @@ int main(int argc, char *argv[]) {
 	state.debug = SDL_CreateTexture(state.renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_TARGET, 128, 128);
 
 	LOG("[MAIN] Allocating pixel buffer", 0);
-	// Create the pixel buffer
+
+	// Create buffers
 	state.pixels = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
 	state.bitmap = getBitMap();
+	u16 numTriangles = TRIANGLE_BUFFER_SIZE;
+	Triangle* triangles = malloc(sizeof(Triangle) * numTriangles);
+	usize trainglesPointer = 0;
+
 
 	LOG("[MAIN] Setting up state", 0);
 	// Setup the camera
@@ -72,8 +78,11 @@ int main(int argc, char *argv[]) {
 		state.mouse.change_x = 0;
 		state.mouse.change_y = 0;
 
-		// Clear the screen
+		// Clear the buffers
 		memset(state.pixels, 0, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
+		numTriangles = TRIANGLE_BUFFER_SIZE;
+		trainglesPointer = 0;
+		triangles = realloc(triangles, sizeof(Triangle) * numTriangles);
 
 		// Handle events
 		LOG("[MAIN] Handling SDL events", 2);
@@ -191,18 +200,19 @@ int main(int argc, char *argv[]) {
 			LOG("[MAIN] No Camera Movement", 2);
 		}
 
+
 		LOG("[MAIN] Drawing Cube", 3);
 		int size = 10;
 		int h_size = size / 2;
 		for (int x = 0; x < size; x++) {
 			for (int y = 0; y < size; y++) {
 				u32 colour = (x + y) % 2 == 0 ? GREEN : PURPLE;
-				drawCube(state, (vf3){ (x - h_size + x*10), -30, (y - h_size + y*10) }, 10, colour);
+				triangles_from_cube((vf3){ (x - h_size + x*10), -30, (y - h_size + y*10) }, 5, (Material){ colour, state.camera.position, 100 }, triangles, &trainglesPointer, &numTriangles);
 			}
 		}
-		
 	
-		LOG("[MAIN] Drawing UI", 2);
+		LOG("[MAIN] Drawing UI & Triangles", 2);
+		drawTriangles(state, triangles, trainglesPointer);
 		drawNumber(state, 1000 / deltaTime, 4, (v2){ 10, SCREEN_HEIGHT - 10 }); // Draw the FPS
 		drawCrosshair(state); // Draw the crosshair last so it is on top
 		LOG("[MAIN] Rendering", 2);
@@ -217,6 +227,7 @@ int main(int argc, char *argv[]) {
     SDL_DestroyWindow(state.window);
 	free(state.pixels);
 	free(state.bitmap);
+	free(triangles);
     return 0;
 } 
 
