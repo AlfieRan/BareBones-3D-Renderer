@@ -14,18 +14,21 @@
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 720
 #define CROSSHAIR_SIZE 5
-#define ROTATION_SPEED 0.001f
-#define MOVEMENT_SPEED 5
+#define ROTATION_SPEED 0.0025f
+#define MOVEMENT_SPEED 0.1f
 #define VERTICAL_FOV 1
+
+#define BITS_PER_CHAR 48
+#define NUM_CHARS 10
 
 #define HALF_SCREEN_WIDTH (SCREEN_WIDTH / 2)
 #define HALF_SCREEN_HEIGHT (SCREEN_HEIGHT / 2)
 #define ASPECT_RATIO ((f64) SCREEN_WIDTH / (f64) SCREEN_HEIGHT)
 
-#define GREEN 0xFF00FFAA
+#define GREEN 0xFF00FF00
 #define PURPLE 0xFFFF00AA
-#define RED 0xFF0000AA
-#define BLUE 0xFF0000FF
+#define RED 0xFF0000FF
+#define BLUE 0xFFFF0000
 
 #define PI 3.14159265358979323846f
 #define HALF_PI 1.57079632679489661923f
@@ -53,9 +56,12 @@ typedef struct { f64 x,y,z; } vf3;
 typedef struct { f32 a,b,c,d,e,f,g,h,i; } m3;
 typedef struct { f32 a,b,c,d; } m4_row;
 typedef struct { m4_row a,b,c,d; } m4;
+
+// Rendering Types
+typedef struct { u32 colour; vf3 closest_light; u32 colour_falloff; } Material;
 typedef struct { vf3 pos, dir; } Ray;
 typedef struct { f64 hor, ver; } Angle3D;
-typedef struct { vf3 a,b,c; u32 color; } Triangle;
+typedef struct { vf3 a,b,c; Material material; } Triangle;
 
 #define vf3_to_v3(v) (v3) { (i32) v.x, (i32) v.y, (i32) v.z }
 
@@ -67,6 +73,7 @@ typedef struct { f32 horizontal, vertical; } FOV;
 typedef struct { u16 horizontal, vertical; } SCREEN;
 typedef struct { vf3 position; CameraRotation rotation; f64 screen_dist; } Camera;
 
+typedef char BitMap[NUM_CHARS][BITS_PER_CHAR+1];
 typedef struct {
 	SDL_Window *window;
 	SDL_Renderer *renderer;
@@ -76,6 +83,8 @@ typedef struct {
 
 	MouseMovement mouse;
 	Camera camera;
+
+	BitMap *bitmap;
 } State;
 
 // Shapes

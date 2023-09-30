@@ -12,7 +12,7 @@ void drawCrosshair(State state) {
 
 void drawSingleNumber(State state, u8 number, v2 position) {
 	if (number > 9) return;
-	char* bitMap = getNumberBitMap(number);
+	char* bitMap = getBitMapItem(state, number);
 	if (bitMap == NULL) return;
 
 	for (int y = 0; y < 8; y++) {

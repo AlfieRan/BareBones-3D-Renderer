@@ -17,6 +17,7 @@
 		"rendering.h": "c",
 		"ui.h": "c",
 		"locale": "c",
-		"string": "c"
+		"string": "c",
+		"stdbool.h": "c"
 	}
 }

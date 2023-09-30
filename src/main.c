@@ -16,7 +16,13 @@ int main(int argc, char *argv[]) {
 	(void)argc;
 	(void)argv;
 
-	printf("\n[MAIN] Initializing SDL");
+	//Debugging
+	setLoggingLevel(2);
+
+	LOG("[MAIN] Starting Program", 0);
+
+
+	LOG("[MAIN] Initializing SDL", 1);
 	// Initialize SDL
 	ASSERT(!SDL_Init(SDL_INIT_VIDEO), "SDL failed to initialize: %s\n", SDL_GetError())
 
@@ -31,13 +37,14 @@ int main(int argc, char *argv[]) {
 	state.texture = SDL_CreateTexture(state.renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 	state.debug = SDL_CreateTexture(state.renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_TARGET, 128, 128);
 
-	printf("\n[MAIN] Allocating pixel buffer");
+	LOG("[MAIN] Allocating pixel buffer", 0);
 	// Create the pixel buffer
 	state.pixels = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
+	state.bitmap = getBitMap();
 
-	printf("\n[MAIN] Setting up state");
+	LOG("[MAIN] Setting up state", 0);
 	// Setup the camera
-	state.camera.screen_dist = 1;
+	state.camera.screen_dist = (f64)(1);
 	state.camera.position = (vf3) { 0, 0, 0 };
 	state.camera.rotation = (CameraRotation) { 
 		(Angle) { 0, 1, 0 },
@@ -46,7 +53,7 @@ int main(int argc, char *argv[]) {
 	};
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
-	printf("\n[MAIN] Starting main loop");
+	LOG("[MAIN] Starting main loop", 0);
 	// Setup delta time
 	u64 NOW = SDL_GetPerformanceCounter();
 	u64 LAST = 0;
@@ -54,11 +61,11 @@ int main(int argc, char *argv[]) {
 
 	// Main Render Loop
 	while (!state.quit) {
-		printf("\n[MAIN] Doing initial frame setup");
+		LOG("[MAIN] Doing initial frame setup", 2);
 		SDL_Event event;
 		LAST = NOW;
    		NOW = SDL_GetPerformanceCounter();
-		deltaTime = (double)((NOW - LAST)*1000 / (double)SDL_GetPerformanceFrequency() );
+		deltaTime = (double)((NOW - LAST)*1000 / (double)SDL_GetPerformanceFrequency());
 		// printf("\n[FPS] %lf", (1000 / deltaTime));
 
 		// Reset mouse movement
@@ -69,7 +76,7 @@ int main(int argc, char *argv[]) {
 		memset(state.pixels, 0, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
 
 		// Handle events
-		printf("\n[MAIN] Handling SDL events");
+		LOG("[MAIN] Handling SDL events", 2);
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 				case SDL_EVENT_QUIT:
@@ -85,13 +92,13 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (state.quit) {
-			printf("\n[MAIN] Quitting Program");
+			LOG("[MAIN] Quitting Program", 0);
 			break;
 		}
 
 		const u8 *keys = SDL_GetKeyboardState(NULL);
 
-		printf("\n[MAIN] Updating Camera Rotation");
+		LOG("[MAIN] Updating Camera Rotation", 2);
 		// Update Camera Rotation
 		state.camera.rotation.x.raw += state.mouse.change_y * ROTATION_SPEED;
 		state.camera.rotation.y.raw += state.mouse.change_x * ROTATION_SPEED;
@@ -118,12 +125,12 @@ int main(int argc, char *argv[]) {
 		state.camera.rotation.z.sin = sin(state.camera.rotation.z.raw);
 		state.camera.rotation.z.cos = cos(state.camera.rotation.z.raw);
 
-		printf("\n[MAIN] Getting Key Inputs");
+		LOG("[MAIN] Getting Key Inputs", 2);
 		// printf("\n[MOUSE CAMERA] Horizontal: (raw: %lf, cos: %lf, sin: %lf), Vertical: (raw: %lf, cos: %lf, sin: %lf)", state.camera.rotation.horizontal.raw, state.camera.rotation.horizontal.cos, state.camera.rotation.horizontal.sin, state.camera.rotation.vertical.raw, state.camera.rotation.vertical.cos, state.camera.rotation.vertical.sin);
-		v3 movementThisFrame = (v3) { 0, 0, 0 };
+		vf3 movementThisFrame = (vf3) { 0, 0, 0 };
 
 		if (keys[SDLK_UP & 0xFFFF] || keys[SDL_SCANCODE_W]) {
-            v3 tmp = (v3) {
+            vf3 tmp = (vf3) {
                 movementThisFrame.x + (MOVEMENT_SPEED * state.camera.rotation.y.sin),
                 movementThisFrame.y,
 				movementThisFrame.z + (MOVEMENT_SPEED * state.camera.rotation.y.cos)
@@ -131,7 +138,7 @@ int main(int argc, char *argv[]) {
 			movementThisFrame = tmp;
         } 
 		if (keys[SDLK_DOWN & 0xFFFF] || keys[SDL_SCANCODE_S]) {
-            v3 tmp = (v3) {
+            vf3 tmp = (vf3) {
                 movementThisFrame.x - (MOVEMENT_SPEED * state.camera.rotation.y.sin),
                 movementThisFrame.y,
 				movementThisFrame.z - (MOVEMENT_SPEED * state.camera.rotation.y.cos)
@@ -139,7 +146,7 @@ int main(int argc, char *argv[]) {
 			movementThisFrame = tmp;
         }
 		if (keys[SDLK_LEFT & 0xFFFF] || keys[SDL_SCANCODE_A]) {
-			v3 tmp = (v3) {
+			vf3 tmp = (vf3) {
 				movementThisFrame.x - (MOVEMENT_SPEED * state.camera.rotation.y.cos),
 				movementThisFrame.y, 
 				movementThisFrame.z + (MOVEMENT_SPEED * state.camera.rotation.y.sin)
@@ -147,7 +154,7 @@ int main(int argc, char *argv[]) {
 			movementThisFrame = tmp;
 		} 
 		if (keys[SDLK_RIGHT & 0xFFFF] || keys[SDL_SCANCODE_D]) {
-			v3 tmp = (v3) {
+			vf3 tmp = (vf3) {
 				movementThisFrame.x + (MOVEMENT_SPEED * state.camera.rotation.y.cos),
 				movementThisFrame.y,
 				movementThisFrame.z - (MOVEMENT_SPEED * state.camera.rotation.y.sin)
@@ -156,7 +163,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (keys[SDL_SCANCODE_E]) {
-			v3 tmp = (v3) {
+			vf3 tmp = (vf3) {
 				movementThisFrame.x,
 				movementThisFrame.y + MOVEMENT_SPEED,
 				movementThisFrame.z 
@@ -165,7 +172,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (keys[SDL_SCANCODE_Q]) {
-			v3 tmp = (v3) {
+			vf3 tmp = (vf3) {
 				movementThisFrame.x,
 				movementThisFrame.y - MOVEMENT_SPEED,
 				movementThisFrame.z 
@@ -173,37 +180,32 @@ int main(int argc, char *argv[]) {
 			movementThisFrame = tmp;
 		}
 
-		printf("\n[MAIN] Updating Camera Position");
+		LOG("[MAIN] Updating Camera Position", 2);
 		if (movementThisFrame.x != 0 || movementThisFrame.y != 0 || movementThisFrame.z != 0) {
 			state.camera.position = (vf3) {
-				state.camera.position.x + (movementThisFrame.x / deltaTime),
-				state.camera.position.y + (movementThisFrame.y / deltaTime),
-				state.camera.position.z + (movementThisFrame.z / deltaTime)
+				(f64)(state.camera.position.x + (movementThisFrame.x * deltaTime)),
+				(f64)(state.camera.position.y + (movementThisFrame.y * deltaTime)),
+				(f64)(state.camera.position.z + (movementThisFrame.z * deltaTime))
 			};
+		} else {
+			LOG("[MAIN] No Camera Movement", 2);
 		}
 
-		printf("\n[MAIN] Drawing Cubes");
-		drawTestCube(state, (vf3){ 0, 0, 100 }, 100, PURPLE);
-		drawTestCube(state, (vf3){ 100, 200, 100 }, 100, GREEN);
-		drawTestCube(state, (vf3){ 100, 300, 100 }, 100, PURPLE);
-		drawTestCube(state, (vf3){ 100, 400, 100 }, 100, GREEN);
-		drawTestCube(state, (vf3){ 100, 200, 100 }, 100, PURPLE);
-		drawTestCube(state, (vf3){ 100, 300, 100 }, 100, GREEN);
-
-		// Draw a cube with a green outline
-		// drawSquare(state, (vf3){ 0, 0, 100 }, 3, RED);
-		drawCube(state, (vf3){ 100, 0, 100 }, 100, PURPLE);
-		drawTestCube(state, (vf3){ 100, 0, 100 }, 100, GREEN);
-
-		// Debug 3d compass
-		// drawLine((vf3){ 0, 0, 0 }, (vf3){ 0, 0, 10 }, BLUE);
-		// drawLine((vf3){ 0, 0, 5 }, (vf3){ 0, 10, 5 }, GREEN);
-		// drawLine((vf3){ 0, 0, 0 }, (vf3){ 10, 0, 0 }, RED);
-
-		printf("\n[MAIN] Drawing UI");
+		LOG("[MAIN] Drawing Cube", 3);
+		int size = 10;
+		int h_size = size / 2;
+		for (int x = 0; x < size; x++) {
+			for (int y = 0; y < size; y++) {
+				u32 colour = (x + y) % 2 == 0 ? GREEN : PURPLE;
+				drawCube(state, (vf3){ (x - h_size + x*10), -30, (y - h_size + y*10) }, 10, colour);
+			}
+		}
+		
+	
+		LOG("[MAIN] Drawing UI", 2);
 		drawNumber(state, 1000 / deltaTime, 4, (v2){ 10, SCREEN_HEIGHT - 10 }); // Draw the FPS
 		drawCrosshair(state); // Draw the crosshair last so it is on top
-		printf("\n[MAIN] Rendering");
+		LOG("[MAIN] Rendering", 2);
 		render(); // Render the screen
 		// state.quit = true;
 	}
@@ -213,6 +215,8 @@ int main(int argc, char *argv[]) {
     SDL_DestroyTexture(state.texture);
     SDL_DestroyRenderer(state.renderer);
     SDL_DestroyWindow(state.window);
+	free(state.pixels);
+	free(state.bitmap);
     return 0;
 } 
 

@@ -24,6 +24,26 @@ void horizontalLine(State state, int y, int x1, int x2, u32 color) {
 	}
 }
 
+u32 alterColourBrightness(u32 colour, f64 factor) {
+    // Separate the color components
+    u8 alpha = (colour & 0xFF000000) >> 24;
+    u8 blue =  (colour & 0x00FF0000) >> 16;
+    u8 green = (colour & 0x0000FF00) >> 8;
+    u8 red =   (colour & 0x000000FF);
+
+    // Apply the brightness decrease to the blue, green, and red components
+	u16 tmp_blue = blue * factor;
+	u16 tmp_green = green * factor;
+	u16 tmp_red = red * factor;
+
+    blue = min(tmp_blue, 255);
+    green = min(tmp_green, 255);
+    red = min(tmp_red, 255);
+
+    // Combine the components to form the new color
+    return (alpha << 24) | (blue << 16) | (green << 8) | red;
+}
+
 void drawLine(State state, vf3 a, vf3 b, u32 color) {
 	// Get the positions of the two points on the screen
 	ScreenPoint pointA = point_to_screen(state.camera, a);
@@ -90,10 +110,12 @@ void drawLine(State state, vf3 a, vf3 b, u32 color) {
 }
 
 void drawTriangle(State state, Triangle triangle) {
+	LOG("[DRAW TRIANGLES] Getting Points to screen", 3);
 	ScreenPoint pointA = point_to_screen(state.camera, triangle.a);
 	ScreenPoint pointB = point_to_screen(state.camera, triangle.b);
 	ScreenPoint pointC = point_to_screen(state.camera, triangle.c);
 
+	LOG("[DRAW TRIANGLES] Checking if points are in front of camera ", 3);
 	if (!pointA.in_front || !pointB.in_front || !pointC.in_front) {
 		// If any of the points are behind the camera, don't draw the triangle
 		// This isn't ideal as it means that triangles that are partially behind the camera will not be drawn
@@ -101,8 +123,20 @@ void drawTriangle(State state, Triangle triangle) {
 		return;
 	}
 
+	LOG("[DRAW TRIANGLES] Getting distances", 3);
+	// Colour calculation - currently sets the whole triangle to one colour but ideally would be a gradient
+	f32 distA = dist_vf3(triangle.material.closest_light, triangle.a);
+	f32 distB = dist_vf3(triangle.material.closest_light, triangle.b);
+	f32 distC = dist_vf3(triangle.material.closest_light, triangle.c);
+	f32 avgDist = avg3(distA, distB, distC);
+
+	LOG("[DRAW TRIANGLES] Calculating colour", 3);
+	f64 colourFalloff = min((triangle.material.colour_falloff / avgDist), 1);
+	u32 colour = alterColourBrightness(triangle.material.colour, colourFalloff);
+
 	v2 posA = pointA.pos; v2 posB = pointB.pos; v2 posC = pointC.pos;
 
+	LOG("[DRAW TRIANGLES] Calculting Bounds", 3);
 	// Get bounding Rectangle within the screen
 	i32 minX = clamp(min3(posA.x, posB.x, posC.x), 0, SCREEN_WIDTH - 1);
 	i32 maxX = clamp(max3(posA.x, posB.x, posC.x), 0, SCREEN_WIDTH - 1);
@@ -110,18 +144,22 @@ void drawTriangle(State state, Triangle triangle) {
 	i32 maxY = clamp(max3(posA.y, posB.y, posC.y), 0, SCREEN_HEIGHT - 1);
 
 	// loop through the bounding rectangle
+	LOG("[DRAW TRIANGLES] Drawing", 3);
 	for (int y = minY; y <= maxY; y++) {
 		for (int x = minX; x <= maxX; x++) {
 			// Check that half lines are all positive or all negative
+			LOG("[DRAW TRIANGLES] Calculating Half Lines", 3);
 			i32 h1 = (posA.x - posB.x) * (y - posA.y) - (posA.y - posB.y) * (x - posA.x);
 			i32 h2 = (posB.x - posC.x) * (y - posB.y) - (posB.y - posC.y) * (x - posB.x);
 			i32 h3 = (posC.x - posA.x) * (y - posC.y) - (posC.y - posA.y) * (x - posC.x);
 
 			// printf("\n[DRAW TRIANGLE] pos(%d, %d) h(%d, %d, %d)", x, y, h1, h2, h3);
 
-			if ((h1 > 0 && h2 > 0 && h3 > 0) || (h1 < 0 && h2 < 0 && h3 < 0)) {
+			// LOG("[DRAW TRIANGLES] Checking Half Lines", 3);
+			if ((bool)((h1 > 0 && h2 > 0 && h3 > 0) || (h1 < 0 && h2 < 0 && h3 < 0))) {
 				// If they are, draw the pixel
-				state.pixels[y * SCREEN_WIDTH + x] = triangle.color;
+				LOG("[DRAW TRIANGLES] Drawing Pixel", 3);
+				state.pixels[y * SCREEN_WIDTH + x] = colour;
 			}
 		}
 	}
@@ -172,8 +210,11 @@ void drawTestCube(State state, vf3 center, u32 length, u32 color) {
 } 
 
 void drawSquareFromPoints(State state, vf3 a, vf3 b, vf3 c, vf3 d, u32 color) {
-	drawTriangle(state, (Triangle) { a, b, c, color });
-	drawTriangle(state, (Triangle) { b, c, d, color });
+	LOG("Assigning Square Material", 3);
+	Material material = (Material) { color, state.camera.position, 100 };
+	LOG("Drawing Triangles", 3);
+	drawTriangle(state, (Triangle) { a, b, c, material });
+	drawTriangle(state, (Triangle) { b, c, d, material });
 }
 
 void drawSquare(State state, vf3 center, u32 length, u32 color) {
@@ -187,6 +228,7 @@ void drawSquare(State state, vf3 center, u32 length, u32 color) {
 }
 
 void drawCube(State state, vf3 center, u32 length, u32 color) {
+	LOG("Assigning points", 3);
 	u32 h_length = length / 2;
 	vf3 a = (vf3) { center.x - h_length, center.y - h_length, center.z - h_length };
 	vf3 b = (vf3) { center.x - h_length, center.y - h_length, center.z + h_length };
@@ -197,6 +239,7 @@ void drawCube(State state, vf3 center, u32 length, u32 color) {
 	vf3 g = (vf3) { center.x + h_length, center.y + h_length, center.z - h_length };
 	vf3 h = (vf3) { center.x + h_length, center.y + h_length, center.z + h_length };
 
+	LOG("Drawing squares", 3);
 	drawSquareFromPoints(state, a, b, c, d, color);
 	drawSquareFromPoints(state, e, f, g, h, color);
 	drawSquareFromPoints(state, a, b, e, f, color);

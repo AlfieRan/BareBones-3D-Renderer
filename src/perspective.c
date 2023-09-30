@@ -35,8 +35,6 @@ ScreenPoint point_to_screen(Camera camera, vf3 point) {
 
 	bool in_front = d_z > 0;
 
-	// printf("\n[INFO DUMP] point (%lf, %lf, %lf) dist (%lf, %lf, %lf) d_(%lf, %lf, %lf)\n\t\t prop (%lf, %lf) screen (%lf, %lf)", point.x, point.y, point.z, x, y, z, d_x, d_y, d_z, screen_prop_x, screen_prop_y, screen_x, screen_y);
-
 	return (ScreenPoint){(v2) { screen_x, screen_y }, in_front};
 }
 
