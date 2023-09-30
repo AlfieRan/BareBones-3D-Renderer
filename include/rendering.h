@@ -12,8 +12,9 @@ void horizontalLine(State state, int y, int x1, int x2, u32 color);
 
 // Core 3D Drawing Functions
 void drawLine(State state, vf3 a, vf3 b, u32 color);
+void drawScreenLine(State state, v2 a, v2 b, u32 color);
 void drawTriangle(State state, Triangle triangle);
-void drawTriangles(State state, Triangle* triangles, usize trianglePointer);
+void drawTriangles(State state);
 int compareTriangles(const void* A, const void* B);
 
 // Helper Functions

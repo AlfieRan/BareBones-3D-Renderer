@@ -5,7 +5,9 @@
 #include "utils.h"
 #include "perspective.h"
 
-void triangles_from_cube(State state, vf3 center, u32 radius, Material material, Triangle* triangles, usize* trianglesPointer, u16* numTriangles);
+typedef struct { usize pointer, numTriangles; } UpdateTriangleData;
+
+UpdateTriangleData triangles_from_cube(State state, vf3 center, u32 radius, Material material);
 f64 getTriangleDist(vf3 a, vf3 b, vf3 c, vf3 camera);
 v3 getChunk(vf3 pos);
 

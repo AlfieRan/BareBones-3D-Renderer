@@ -83,6 +83,10 @@ typedef struct {
 	u32 *pixels;
 	bool quit;
 
+	Triangle *triangles;
+	usize trianglesPointer;
+	usize numTriangles;
+
 	MouseMovement mouse;
 	Camera camera;
 

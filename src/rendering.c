@@ -58,35 +58,38 @@ void drawLine(State state, vf3 a, vf3 b, u32 color) {
 	v2 posB = pointB.pos;
 
 	// printf("\n[DRAW LINE] posA: {%d, %d} posB: {%d, %d}", posA.x, posA.y, posB.x, posB.y);
+	drawScreenLine(state, posA, posB, color);
+}
 
-	if (posA.x == posB.x) {
+void drawScreenLine(State state, v2 a, v2 b, u32 color) {
+	if (a.x == b.x) {
 		// printf("[\nDRAW LINE] Drawing vertical line");
 		// If the x values are the same, just draw a vertical line
-		ClampPosition clamped = clamp_position(posA.y, posB.y, 0, SCREEN_HEIGHT - 1);
+		ClampPosition clamped = clamp_position(a.y, b.y, 0, SCREEN_HEIGHT - 1);
 		for (int y = clamped.low; y <= clamped.high; y++) {
-			state.pixels[y * SCREEN_WIDTH + posA.x] = color;
+			state.pixels[y * SCREEN_WIDTH + a.x] = color;
 		}
 
-	} else if (posA.y == posB.y) {
+	} else if (a.y == b.y) {
 		// printf("\n[DRAW LINE] Drawing horizontal line");
 		// If the y values are the same, just draw a horizontal line
-		ClampPosition clamped = clamp_position(posA.x, posB.x, 0, SCREEN_WIDTH - 1);
+		ClampPosition clamped = clamp_position(a.x, b.x, 0, SCREEN_WIDTH - 1);
 		for (int x = clamped.low; x <= clamped.high; x++) {
-			state.pixels[posA.y * SCREEN_WIDTH + x] = color;
+			state.pixels[a.y * SCREEN_WIDTH + x] = color;
 		}
 
 	} else {
 		// printf("\n[DRAW LINE] Drawing non vertical line");
 		// Now use y=mx+c to get a definition for the line
 		// m = (y_b - y_a)/(x_b - x_a)
-		f32 m = (f32)((f32)(posB.y - posA.y) / (f32)(posB.x - posA.x));
+		f32 m = (f32)((f32)(b.y - a.y) / (f32)(b.x - a.x));
 		// c = y - mx
-		f32 c = (f32)(posA.y - (f32)(m * posA.x));
+		f32 c = (f32)(a.y - (f32)(m * a.x));
 	
 		if (fabs(m) > 1) {
 			// If the gradient is greater than 1, we need to loop through the y values
 			int x;
-			ClampPosition clamped = clamp_position(posA.y, posB.y, 0, SCREEN_HEIGHT - 1);
+			ClampPosition clamped = clamp_position(a.y, b.y, 0, SCREEN_HEIGHT - 1);
 			for (int y = clamped.low; y <= clamped.high; y++) {
 				x = (y - c) / m;
 				if (x > 0 && x < SCREEN_WIDTH) {
@@ -97,7 +100,7 @@ void drawLine(State state, vf3 a, vf3 b, u32 color) {
 		} else {
 			// Otherwise, we need to loop through the x values
 			int y;
-			ClampPosition clamped = clamp_position(posA.x, posB.x, 0, SCREEN_WIDTH - 1);
+			ClampPosition clamped = clamp_position(a.x, b.x, 0, SCREEN_WIDTH - 1);
 			for (int x = clamped.low; x <= clamped.high; x++) {
 				y = (m * x) + c;
 				if (y > 0 && y < SCREEN_HEIGHT) {
@@ -145,6 +148,7 @@ void drawTriangle(State state, Triangle triangle) {
 
 	// loop through the bounding rectangle
 	LOG("[DRAW TRIANGLES] Drawing", 3);
+
 	for (int y = minY; y <= maxY; y++) {
 		for (int x = minX; x <= maxX; x++) {
 			// Check that half lines are all positive or all negative
@@ -178,11 +182,11 @@ int compareTriangles(const void* A, const void* B) {
 	}
 }
 
-void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
-	qsort(triangles, trianglePointer + 1, sizeof(Triangle), compareTriangles);
+void drawTriangles(State state) {
+	qsort(state.triangles, state.trianglesPointer + 1, sizeof(Triangle), compareTriangles);
 
-	for (usize i = 0; i < trianglePointer; i++) {
-		Triangle triangle = triangles[i];
+	for (usize i = 0; i < state.trianglesPointer; i++) {
+		Triangle triangle = state.triangles[i];
 		drawTriangle(state, triangle);
 	}
 }
