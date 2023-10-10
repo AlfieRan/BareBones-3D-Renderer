@@ -19,6 +19,8 @@
 		"locale": "c",
 		"string": "c",
 		"stdbool.h": "c",
-		"triangulation.h": "c"
+		"triangulation.h": "c",
+		"mapping.h": "c",
+		"type_traits": "c"
 	}
 }
