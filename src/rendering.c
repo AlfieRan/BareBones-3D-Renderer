@@ -270,8 +270,8 @@ void drawSquareFromPoints(State state, vf3 a, vf3 b, vf3 c, vf3 d, u32 color) {
 	LOG("Assigning Square Material", 3);
 	Material material = (Material) { color, state.camera.position, 100 };
 	LOG("Drawing Triangles", 3);
-	drawTriangle(state, (Triangle) { a, b, c, material, getTriangleDist(a,b,c,state.camera.position) });
-	drawTriangle(state, (Triangle) { b, c, d, material, getTriangleDist(b,c,d,state.camera.position) });
+	drawTriangle(state, (Triangle) { a, b, c, material, getTriangleDist(a,b,c,state.camera.position), true });
+	drawTriangle(state, (Triangle) { b, c, d, material, getTriangleDist(b,c,d,state.camera.position), true });
 }
 
 void drawSquare(State state, vf3 center, u32 length, u32 color) {
