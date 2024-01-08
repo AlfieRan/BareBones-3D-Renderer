@@ -27,15 +27,20 @@ ScreenPoint point_to_screen(Camera camera, vf3 point) {
 	f64 d_y = (camera.rotation.x.sin * d_z_y_sub) + (camera.rotation.x.cos * cos_z_y_minus_sin_z_x);
 	f64 d_z = (camera.rotation.x.cos * d_z_y_sub) - (camera.rotation.x.sin * cos_z_y_minus_sin_z_x);
 	
-	f64 screen_prop_x = (camera.screen_dist * d_x) / d_z;
-	f64 screen_prop_y = (camera.screen_dist  * d_y) / d_z;
+	if (d_z == 0) {
+		return (ScreenPoint) { (v2) { 0, 0 }, false, 0 };
+	}
+
+	f64 inv_d_z = 1 / d_z;
+	f64 screen_prop_x = (camera.screen_dist * d_x) * inv_d_z;
+	f64 screen_prop_y = (camera.screen_dist  * d_y) * inv_d_z;
 
 	f64 screen_x = (screen_prop_x + 1) * HALF_SCREEN_WIDTH;
 	f64 screen_y = ((screen_prop_y * ASPECT_RATIO) + 1) * HALF_SCREEN_HEIGHT;
 
 	bool in_front = d_z > 0;
 
-	return (ScreenPoint){(v2) { screen_x, screen_y }, in_front};
+	return (ScreenPoint){(v2) { screen_x, screen_y }, in_front, d_z};
 }
 
 ClampPosition clamp_position(int a, int b, int minimum, int maximum) {

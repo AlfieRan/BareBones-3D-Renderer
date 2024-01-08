@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
 	(void)argv;
 
 	//Debugging
-	setLoggingLevel(2);
+	setLoggingLevel(4);
 
 	LOG("[MAIN] Starting Program", 0);
 
@@ -27,24 +27,49 @@ int main(int argc, char *argv[]) {
 	ASSERT(!SDL_Init(SDL_INIT_VIDEO), "SDL failed to initialize: %s\n", SDL_GetError())
 
 	// Create the window
+	LOG("[MAIN] Creating SDL Window", 2);
 	state.window = SDL_CreateWindow("W 3D Renderer", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 	ASSERT(state.window, "SDL failed to create window: %s\n", SDL_GetError())
 
 	// Create the renderer
+	LOG("[MAIN] Creating SDL Renderer", 2);
 	state.renderer = SDL_CreateRenderer(state.window, NULL, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
 	// Setup Textures
+	LOG("[MAIN] Creating SDL Textures", 2); 
 	state.texture = SDL_CreateTexture(state.renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
+	LOG("[MAIN] Creating SDL Debug Textures", 2); 
 	state.debug = SDL_CreateTexture(state.renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_TARGET, 128, 128);
 
-	LOG("[MAIN] Allocating pixel buffer", 0);
+	LOG("[MAIN] Allocating state buffers", 0);
 
 	// Create buffers
+	LOG("[MAIN] Allocating pixel buffer", 2);
 	state.pixels = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
-	state.bitmap = getBitMap();
+	if (!state.pixels) {
+		fprintf(stderr, "Failed to allocate memory for pixels buffer.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	// LOG("[MAIN] Allocating bitmap", 2);
+	// state.bitmap = getBitMap();
+	// if (state.bitmap == NULL) {
+	// 	fprintf(stderr, "getBitMap() failed to provide a valid bitmap.\n");
+	// 	free(state.pixels); // Clean up previously allocated memory
+	// 	exit(EXIT_FAILURE);
+	// }
+
+	LOG("[MAIN] Allocating triangle buffer", 0);
 	u16 numTriangles = TRIANGLE_BUFFER_SIZE;
-	Triangle* triangles = malloc(sizeof(Triangle) * numTriangles);
+	Triangle* triangles = malloc(sizeof(Triangle) * (numTriangles + 1));
 	usize trianglesPointer = 0;
+
+	if (triangles == NULL) {
+		fprintf(stderr, "Failed to allocate memory for triangles buffer.\n");
+		free(state.pixels); // Clean up previously allocated memory
+		free(state.bitmap); // Clean up previously allocated memory
+		exit(EXIT_FAILURE);
+	}
 
 
 	LOG("[MAIN] Setting up state", 0);
@@ -73,7 +98,7 @@ int main(int argc, char *argv[]) {
 		deltaTime = (double)((NOW - LAST)*1000 / (double)SDL_GetPerformanceFrequency());
 		// printf("\n[FPS] %lf", (1000 / deltaTime));
 
-		// Reset mouse movement
+		// // Reset mouse movement
 		state.mouse.change_x = 0;
 		state.mouse.change_y = 0;
 
@@ -81,9 +106,9 @@ int main(int argc, char *argv[]) {
 		memset(state.pixels, 0, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
 		numTriangles = TRIANGLE_BUFFER_SIZE;
 		trianglesPointer = 0;
-		memset(triangles, 0, sizeof(Triangle) * numTriangles);
+		memset(triangles, 0, sizeof(Triangle) * (numTriangles + 1));
 
-		// Handle events
+		// // Handle events
 		LOG("[MAIN] Handling SDL events", 2);
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
@@ -123,7 +148,7 @@ int main(int argc, char *argv[]) {
 			state.camera.rotation.y.raw += TWO_PI;
 		}
 		
-		// printf("\n\n[CAMERA] Rotation (%lf, %lf, %lf) \n", state.camera.rotation.x.raw, state.camera.rotation.y.raw, state.camera.rotation.z.raw);
+		printf("\n\n[CAMERA] Rotation (%lf, %lf, %lf) \n", state.camera.rotation.x.raw, state.camera.rotation.y.raw, state.camera.rotation.z.raw);
 
 		// Update the sin and cos values
 		state.camera.rotation.x.sin = sin(state.camera.rotation.x.raw);
@@ -201,7 +226,7 @@ int main(int argc, char *argv[]) {
 
 
 		LOG("[MAIN] Drawing Cube(s) to triangle buffer", 3);
-		int size = 100;
+		int size = 10;
 		int h_size = size / 2;
 		for (int x = 0; x < size; x++) {
 			for (int y = 0; y < size; y++) {
@@ -218,7 +243,7 @@ int main(int argc, char *argv[]) {
 
 		LOG("[MAIN] Drawing Shapes & UI to screen", 2);
 		drawTriangles(state, triangles, trianglesPointer);
-		drawNumber(state, 1000 / deltaTime, 4, (v2){ 10, SCREEN_HEIGHT - 10 }); // Draw the FPS
+		// drawNumber(state, 1000 / deltaTime, 4, (v2){ 10, SCREEN_HEIGHT - 10 }, 2); // Draw the FPS
 		drawCrosshair(state); // Draw the crosshair last so it is on top
 
 		LOG("[MAIN] Rendering", 2);
@@ -231,7 +256,7 @@ int main(int argc, char *argv[]) {
     SDL_DestroyRenderer(state.renderer);
     SDL_DestroyWindow(state.window);
 	free(state.pixels);
-	free(state.bitmap);
+	// free(state.bitmap);
 	free(triangles);
     return 0;
 } 

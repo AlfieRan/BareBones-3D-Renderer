@@ -2,6 +2,24 @@
 
 static bool debug = true;
 
+Barycentric getBarycentric(v2 point, v2 a, v2 b, v2 c) {
+	v2 v0 = { b.x - a.x, b.y - a.y };
+    v2 v1 = { c.x - a.x, c.y - a.y };
+    v2 v2 = { point.x - a.x, point.y - a.y };
+
+    f64 dot00 = v0.x * v0.x + v0.y * v0.y;
+    f64 dot01 = v0.x * v1.x + v0.y * v1.y;
+    f64 dot02 = v0.x * v2.x + v0.y * v2.y;
+    f64 dot11 = v1.x * v1.x + v1.y * v1.y;
+    f64 dot12 = v1.x * v2.x + v1.y * v2.y;
+
+    f64 invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+    f64 w1 = (dot11 * dot02 - dot01 * dot12) * invDenom;
+    f64 w2 = (dot00 * dot12 - dot01 * dot02) * invDenom;
+    f64 w3 = 1 - w1 - w2;
+	return (Barycentric) { w1, w2, w3 };
+}
+
 void verticalLine(State state, int x, int y1, int y2, u32 color) {
 	if (y1 > y2) {
 		int tmp = y1;
@@ -9,21 +27,25 @@ void verticalLine(State state, int x, int y1, int y2, u32 color) {
 		y2 = tmp;
 	}
 
+	int index = y1 * SCREEN_WIDTH + x;
 	for (int y = y1; y <= y2; y++) {
-		state.pixels[y * SCREEN_WIDTH + x] = color;
+		state.pixels[index] = color;
+        index += SCREEN_WIDTH;
 	}
 }
 
 void horizontalLine(State state, int y, int x1, int x2, u32 color) {
-	if (x1 > x2) {
-		int tmp = x1;
-		x1 = x2;
-		x2 = tmp;
-	}
+    if (x1 > x2) {
+        int tmp = x1;
+        x1 = x2;
+        x2 = tmp;
+    }
 
-	for (int x = x1; x <= x2; x++) {
-		state.pixels[y * SCREEN_WIDTH + x] = color;
-	}
+    u32* start = &state.pixels[y * SCREEN_WIDTH + x1];
+    u32* end = &state.pixels[y * SCREEN_WIDTH + x2];
+    for (u32* p = start; p <= end; p++) {
+        *p = color;
+    }
 }
 
 u32 alterColourBrightness(u32 colour, f64 factor) {
@@ -110,6 +132,7 @@ void drawLine(State state, vf3 a, vf3 b, u32 color) {
 		};
 	}
 }
+
 
 void draw2dCircle(State state, v2 center, u8 radius, u32 colour) {
 	// Draw a circle using the midpoint circle algorithm
@@ -206,20 +229,118 @@ int compareTriangles(const void* A, const void* B) {
 	Triangle triA = *(const Triangle*) A;
 	Triangle triB = *(const Triangle*) B;
 
-	if (triA.dist > triB.dist) {
+	if (triA.dist < triB.dist) {
 		return -1;
-	} else if (triA.dist < triB.dist) {
+	} else if (triA.dist > triB.dist) {
 		return 1;
 	} else {
 		return 0;
 	}
 }
 
-void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
-	for (usize i = 0; i < trianglePointer; i++) {
-		Triangle triangle = triangles[i];
-		drawTriangle(state, triangle);
+TriangleBoundaries getTriangleBoundaries(State state, Triangle triangle) {
+	ScreenPoint pointA = point_to_screen(state.camera, triangle.a);
+	ScreenPoint pointB = point_to_screen(state.camera, triangle.b);
+	ScreenPoint pointC = point_to_screen(state.camera, triangle.c);
+
+	if (!pointA.in_front || !pointB.in_front || !pointC.in_front) {
+		ScreenPoint tmp = (ScreenPoint) { (v2) { 0, 0 }, false, 0 };
+		return (TriangleBoundaries) { 0, 0, 0, 0, tmp, tmp, tmp };
 	}
+
+	u32 minX = min3(pointA.pos.x, pointB.pos.x, pointC.pos.x);
+	u32 maxX = max3(pointA.pos.x, pointB.pos.x, pointC.pos.x);
+	u32 minY = min3(pointA.pos.y, pointB.pos.y, pointC.pos.y);
+	u32 maxY = max3(pointA.pos.y, pointB.pos.y, pointC.pos.y);
+
+	return (TriangleBoundaries) { minX, maxX, minY, maxY, pointA, pointB, pointC };
+}
+
+void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
+	// Setup the depth buffer
+	float depthBuffer[SCREEN_WIDTH * SCREEN_HEIGHT];
+	for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
+		depthBuffer[i] = 1000000;
+	}
+
+	// Now draw the triangles
+	for (usize i = 0; i < trianglePointer; i++) {
+		// LOG("[DRAW TRIANGLES] Drawing Triangle", 3);
+		Triangle triangle = triangles[i];
+		TriangleBoundaries boundaries = getTriangleBoundaries(state, triangle);
+		if (boundaries.max_x == 0 && boundaries.max_y == 0 && boundaries.min_x == 0 && boundaries.min_y == 0) {
+			continue;
+		} else if (!boundaries.a.in_front && !boundaries.b.in_front && !boundaries.c.in_front) {
+			continue;
+		}
+
+		ScreenPoint a = boundaries.a;
+		ScreenPoint b = boundaries.b;
+		ScreenPoint c = boundaries.c;
+		
+		// Barycentric precalculations
+		v2 bar_v0 = { b.pos.x - a.pos.x, b.pos.y - a.pos.y };
+    	v2 bar_v1 = { c.pos.x - a.pos.x, c.pos.y - a.pos.y };
+		f64 bar_dot00 = bar_v0.x * bar_v0.x + bar_v0.y * bar_v0.y;
+		f64 bar_dot01 = bar_v0.x * bar_v1.x + bar_v0.y * bar_v1.y;
+		f64 bar_dot11 = bar_v1.x * bar_v1.x + bar_v1.y * bar_v1.y;
+		f64 bar_invDenom = 1 / (bar_dot00 * bar_dot11 - bar_dot01 * bar_dot01);
+
+		// Loop through the bounding rectangle
+		// LOG("[DRAW TRIANGLES] Drawing", 3);
+		
+		u32 boundary_x_width = boundaries.max_x - boundaries.min_x;
+		u32 boundary_y_width = boundaries.max_y - boundaries.min_y;
+		u32 boundary_area = boundary_x_width * boundary_y_width;
+		// printf("\n[DRAW TRIANGLES] Triangle %d/%d - Area: %d", i, trianglePointer, boundary_area);
+
+		if (boundary_area > 100000) {
+			// printf("\n[DRAW TRIANGLES] Triangle %d/%d - Area: %d", i, trianglePointer, boundary_area);
+			continue;
+		}
+
+		for (u32 x = boundaries.min_x; x <= boundaries.max_x; x++) {
+			for (u32 y = boundaries.min_y; y <= boundaries.max_y; y++) {
+				// check if the point is inside the screen
+				if (x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT) {
+					continue;
+				}
+				
+				// finish barycentric calculations
+				v2 bar_v2 = { x - a.pos.x, y - a.pos.y };
+				f64 bar_dot02 = bar_v0.x * bar_v2.x + bar_v0.y * bar_v2.y;
+				f64 bar_dot12 = bar_v1.x * bar_v2.x + bar_v1.y * bar_v2.y;
+				f64 bar_w1 = (bar_dot11 * bar_dot02 - bar_dot01 * bar_dot12) * bar_invDenom;
+				f64 bar_w2 = (bar_dot00 * bar_dot12 - bar_dot01 * bar_dot02) * bar_invDenom;
+				f64 bar_w3 = 1 - bar_w1 - bar_w2;
+
+				// Check if the point is inside the triangle
+				if ((bool)((bar_w1 > 0 && bar_w2 > 0 && bar_w3 > 0) || (bar_w1 < 0 && bar_w2 < 0 && bar_w3 < 0))) {
+					// If it is, calculate the depth
+					f64 depth = (bar_w1 * a.depth) + (bar_w2 * b.depth) + (bar_w3 * c.depth);
+					// Check if the depth is less than the depth buffer
+					if (depth < depthBuffer[y * SCREEN_WIDTH + x]) {
+						// LOG("[DRAW TRIANGLES] Drawing Pixel", 3);
+						// If it is, draw the pixel
+
+						// colour calculation - currently based on camera being the light source
+						// f64 colourFalloff = min((triangle.material.colour_falloff / depth), 1);
+						// u32 colour = alterColourBrightness(triangle.material.colour, colourFalloff);
+						u32 colour = triangle.material.colour;
+
+						// draw the pixel
+						state.pixels[y * SCREEN_WIDTH + x] = colour;
+						depthBuffer[y * SCREEN_WIDTH + x] = depth;
+					}
+				}
+			}
+		}
+
+		// drawTriangle(state, triangle);
+		// LOG("[DRAW TRIANGLES] Drew Triangle", 3);
+		// printf("\n[DRAW TRIANGLES] Triangle %d/%d", i, trianglePointer);
+	}
+	LOG("[DRAW TRIANGLES] Triangles drawn", 2);
 }
 
 void drawCubeMeshFromPoints(State state, vf3 a, vf3 b, vf3 c, vf3 d, vf3 e, vf3 f, vf3 g, vf3 h, u32 color) {

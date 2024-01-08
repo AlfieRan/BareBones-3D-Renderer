@@ -7,7 +7,7 @@
 #include "utils.h"
 
 void drawCrosshair(State state);
-void drawSingleNumber(State state, u8 number, v2 position);
-void drawNumber(State state, u8 number, u8 digits, v2 position);
+void drawSingleNumber(State state, u8 number, v2 position, u8 scale);
+void drawNumber(State state, u8 number, u8 digits, v2 position, u8 scale);
 
 #endif /* UI_H__*/

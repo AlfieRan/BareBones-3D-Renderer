@@ -2,7 +2,7 @@
 #include "types.h"
 
 // Logging
-static u8 logging = 0;
+static u8 logging = 1;
 // 0 - Only Key Messages
 // 1 - Key Messages and Info Messages
 // 2 - Every Frame Primary Messages
@@ -98,11 +98,17 @@ BitMap* getBitMap() {
 	FILE *fp = fopen("./assets/bitmap.txt", "r");
 
 	if (fp == NULL) {
-        LOG("Error: could not open the num_chars.txt file", 0);
+        LOG("Error: could not open the bitmap.txt file", 0);
         exit(1);
     };
 
 	BitMap* lines = malloc(sizeof(BitMap));
+	if (lines == NULL) {
+        LOG("Error: memory allocation for BitMap failed", 0);
+        fclose(fp);
+        exit(1);
+    }
+
 	char line[BITS_PER_CHAR + 1];
 	for (int i = 0; i < NUM_CHARS; i++) {
 		if (fgets(line, BITS_PER_CHAR + 2, fp) == NULL) {
@@ -113,11 +119,16 @@ BitMap* getBitMap() {
 		}
 			
 		line[strcspn(line, "\n")] = '\0';
+		if (strlen(line) > BITS_PER_CHAR) {
+            LOG("[ERROR] Line length exceeds BITS_PER_CHAR.", 1);
+            fclose(fp);
+            free(lines);
+            return NULL;
+        }
 		strcpy((*lines)[i], line);
 	}
 
 	fclose(fp);
-
 	return lines;
 }
 

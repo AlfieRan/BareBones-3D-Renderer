@@ -6,7 +6,7 @@ INCLUDE_DIR = ./include
 ADDITIONAL_FLAGS = -I/usr/local/include -L/usr/local/lib -lSDL3
 
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -I$(INCLUDE_DIR) ${ADDITIONAL_FLAGS}
+CFLAGS = -Wall -Wextra -I$(INCLUDE_DIR) ${ADDITIONAL_FLAGS}
 
 LDFLAGS = -lm
 

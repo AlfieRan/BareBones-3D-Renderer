@@ -10,7 +10,7 @@ void drawCrosshair(State state) {
 	horizontalLine(state, centerY, centerX - CROSSHAIR_SIZE, centerX + CROSSHAIR_SIZE, 0xFFFFFFFF);
 }
 
-void drawSingleNumber(State state, u8 number, v2 position) {
+void drawSingleNumber(State state, u8 number, v2 position, u8 scale) {
 	if (number > 9) return;
 	char* bitMap = getBitMapItem(state, number);
 	if (bitMap == NULL) return;
@@ -18,14 +18,22 @@ void drawSingleNumber(State state, u8 number, v2 position) {
 	for (int y = 0; y < 8; y++) {
 		for (int x = 0; x < 6; x++) {
 			if (bitMap[(y * 6) + x] == '1') {
-				state.pixels[(position.y - y) * SCREEN_WIDTH + (position.x + x)] = 0xFFFFFFFF;
+				for (int i = 0; i < scale; i++) {
+					for (int j = 0; j < scale; j++) {
+						int pixelX = position.x + x * scale + i;
+						int pixelY = position.y - y * scale + j;
+						if (pixelX >= 0 && pixelX < SCREEN_WIDTH && pixelY >= 0 && pixelY < SCREEN_HEIGHT) {
+							state.pixels[pixelY * SCREEN_WIDTH + pixelX] = 0xFFFFFFFF;
+						}
+					}
+				}
 			}
 		}
 	}
 	free(bitMap);
 }
 
-void drawNumber(State state, u8 number, u8 digits, v2 position) {
+void drawNumber(State state, u8 number, u8 digits, v2 position, u8 scale) {
 	u8 digitArray[digits];
 
 	for (int i = 0; i < digits; i++) {
@@ -33,7 +41,8 @@ void drawNumber(State state, u8 number, u8 digits, v2 position) {
 		number /= 10;
 	}
 
+	int offsetMult = 6 * scale;
 	for (int i = 0; i < digits; i++) {
-		drawSingleNumber(state, digitArray[i], (v2) { position.x + (i * 6), position.y });
+		drawSingleNumber(state, digitArray[i], (v2) { position.x + (i * offsetMult), position.y }, scale);
 	}
 }
