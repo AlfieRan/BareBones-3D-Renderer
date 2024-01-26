@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
 	(void)argv;
 
 	//Debugging
-	setLoggingLevel(4);
+	setLoggingLevel(0);
 
 	LOG("[MAIN] Starting Program", 0);
 
@@ -51,17 +51,17 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	// LOG("[MAIN] Allocating bitmap", 2);
-	// state.bitmap = getBitMap();
-	// if (state.bitmap == NULL) {
-	// 	fprintf(stderr, "getBitMap() failed to provide a valid bitmap.\n");
-	// 	free(state.pixels); // Clean up previously allocated memory
-	// 	exit(EXIT_FAILURE);
-	// }
+	LOG("[MAIN] Allocating bitmap", 2);
+	state.bitmap = getBitMap();
+	if (state.bitmap == NULL) {
+		fprintf(stderr, "getBitMap() failed to provide a valid bitmap.\n");
+		free(state.pixels); // Clean up previously allocated memory
+		exit(EXIT_FAILURE);
+	}
 
 	LOG("[MAIN] Allocating triangle buffer", 0);
 	u16 numTriangles = TRIANGLE_BUFFER_SIZE;
-	Triangle* triangles = malloc(sizeof(Triangle) * (numTriangles + 1));
+	Triangle* triangles = malloc(sizeof(Triangle) * numTriangles);
 	usize trianglesPointer = 0;
 
 	if (triangles == NULL) {
@@ -106,7 +106,8 @@ int main(int argc, char *argv[]) {
 		memset(state.pixels, 0, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
 		numTriangles = TRIANGLE_BUFFER_SIZE;
 		trianglesPointer = 0;
-		memset(triangles, 0, sizeof(Triangle) * (numTriangles + 1));
+		triangles = realloc(triangles, sizeof(Triangle) * numTriangles);
+		memset(triangles, 0, sizeof(Triangle) * numTriangles);
 
 		// // Handle events
 		LOG("[MAIN] Handling SDL events", 2);
@@ -148,7 +149,7 @@ int main(int argc, char *argv[]) {
 			state.camera.rotation.y.raw += TWO_PI;
 		}
 		
-		printf("\n\n[CAMERA] Rotation (%lf, %lf, %lf) \n", state.camera.rotation.x.raw, state.camera.rotation.y.raw, state.camera.rotation.z.raw);
+		// printf("\n\n[CAMERA] Rotation (%lf, %lf, %lf) \n", state.camera.rotation.x.raw, state.camera.rotation.y.raw, state.camera.rotation.z.raw);
 
 		// Update the sin and cos values
 		state.camera.rotation.x.sin = sin(state.camera.rotation.x.raw);
@@ -226,24 +227,28 @@ int main(int argc, char *argv[]) {
 
 
 		LOG("[MAIN] Drawing Cube(s) to triangle buffer", 3);
-		int size = 10;
+		int size = 50;
 		int h_size = size / 2;
 		for (int x = 0; x < size; x++) {
 			for (int y = 0; y < size; y++) {
 				u32 colour = (x + y) % 2 == 0 ? GREEN : PURPLE;
-				triangles_from_cube(state, (vf3){ (x - h_size + x*10), -30, (y - h_size + y*10) }, 5, (Material){ colour, state.camera.position, 100 }, triangles, &trianglesPointer, &numTriangles);
+				triangles_from_cube(state, (vf3){ (x - h_size + x*10), -30, (y - h_size + y*10) }, 5, (Material){ colour, state.camera.position, 4000 }, &triangles, &trianglesPointer, &numTriangles);
 			}
 		}
 
+		// triangles_from_cube(state, (vf3){ 0, -30, 20 }, 5, (Material){ PURPLE, state.camera.position, 100 }, triangles, &trianglesPointer, &numTriangles);
+		// triangles_from_cube(state, (vf3){ 10, -30, 20 }, 5, (Material){ GREEN, state.camera.position, 100 }, triangles, &trianglesPointer, &numTriangles);
+		LOG("[MAIN] Finished drawing cubes", 3);
 
 		// Start drawing to the screen
-		LOG("[MAIN] Getting Camera pointing", 2);
-		qsort(triangles, trianglesPointer + 1, sizeof(Triangle), compareTriangles); // sort back to front for rendering
-
-
-		LOG("[MAIN] Drawing Shapes & UI to screen", 2);
+		// LOG("[MAIN] Getting Camera pointing", 2);
+		LOG("[MAIN] Sorting Triangles", 2);
+		qsort(triangles, trianglesPointer, sizeof(Triangle), compareTriangles); // sort back to front for rendering
+		LOG("[MAIN] Drawing Triangles", 2);
 		drawTriangles(state, triangles, trianglesPointer);
-		// drawNumber(state, 1000 / deltaTime, 4, (v2){ 10, SCREEN_HEIGHT - 10 }, 2); // Draw the FPS
+
+		LOG("[MAIN] Drawing UI", 2);
+		drawNumber(state, 1000 / deltaTime, 4, (v2){ 10, SCREEN_HEIGHT - 10 }, 2); // Draw the FPS
 		drawCrosshair(state); // Draw the crosshair last so it is on top
 
 		LOG("[MAIN] Rendering", 2);

@@ -33,14 +33,16 @@ ScreenPoint point_to_screen(Camera camera, vf3 point) {
 
 	f64 inv_d_z = 1 / d_z;
 	f64 screen_prop_x = (camera.screen_dist * d_x) * inv_d_z;
-	f64 screen_prop_y = (camera.screen_dist  * d_y) * inv_d_z;
+	f64 screen_prop_y = (camera.screen_dist * d_y) * inv_d_z;
 
 	f64 screen_x = (screen_prop_x + 1) * HALF_SCREEN_WIDTH;
 	f64 screen_y = ((screen_prop_y * ASPECT_RATIO) + 1) * HALF_SCREEN_HEIGHT;
 
+	f64 sqr_depth = x * x + y * y + z * z;
 	bool in_front = d_z > 0;
+	// bool in_front = true;
 
-	return (ScreenPoint){(v2) { screen_x, screen_y }, in_front, d_z};
+	return (ScreenPoint){(v2) { screen_x, screen_y }, in_front, sqr_depth};
 }
 
 ClampPosition clamp_position(int a, int b, int minimum, int maximum) {
@@ -50,4 +52,20 @@ ClampPosition clamp_position(int a, int b, int minimum, int maximum) {
 	high = clamp(high, minimum, maximum);
 
 	return (ClampPosition) { low, high };
+}
+
+vf3 cam_pos_minus_screen(Camera camera) {
+    // Calculate the forward vector from the camera's rotation angles
+    // Forward vector components
+    f64 Fx = camera.rotation.y.cos * camera.rotation.x.cos;
+    f64 Fy = camera.rotation.x.sin;
+    f64 Fz = camera.rotation.y.sin * camera.rotation.x.cos;
+
+    // Calculate the camera origin by moving back along the forward vector
+    vf3 origin;
+    origin.x = camera.position.x - Fx * camera.screen_dist;
+    origin.y = camera.position.y - Fy * camera.screen_dist;
+    origin.z = camera.position.z - Fz * camera.screen_dist;
+
+    return origin;
 }

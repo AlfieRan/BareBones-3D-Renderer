@@ -32,6 +32,16 @@ i32 max3(i32 a, i32 b, i32 c) {
 	return max(maxAB, c);
 }
 
+u32 min3u(u32 a, u32 b, u32 c) {
+	u32 minAB = min(a, b);
+	return min(minAB, c);
+}
+
+u32 max3u(u32 a, u32 b, u32 c) {
+	u32 maxAB = max(a, b);
+	return max(maxAB, c);
+}
+
 f64 dot_vf2(vf2 a, vf2 b) {
 	return (f64)((f64)(a.x * b.x) + (f64)(a.y * b.y));
 }
@@ -66,6 +76,10 @@ f32 product_vf3(vf3 a) {
 
 f32 dist_vf3(vf3 a, vf3 b) {
 	return product_vf3((vf3){ a.x - b.x, a.y - b.y, a.z - b.z });
+}
+
+f64 sqr_dist_vf3(vf3 a, vf3 b) {
+	return (f64)((f32)(a.x - b.x) * (f32)(a.x - b.x) + (f32)(a.y - b.y) * (f32)(a.y - b.y) + (f32)(a.z - b.z) * (f32)(a.z - b.z));
 }
 
 m3 matrixMult_m3(m3 a, m3 b){
@@ -109,9 +123,9 @@ BitMap* getBitMap() {
         exit(1);
     }
 
-	char line[BITS_PER_CHAR + 1];
+	char line[BITS_PER_CHAR + 2];
 	for (int i = 0; i < NUM_CHARS; i++) {
-		if (fgets(line, BITS_PER_CHAR + 2, fp) == NULL) {
+		if (fgets(line, sizeof(line), fp) == NULL) {
 			LOG("[ERROR] Can't get bit map, invalid number of lines.", 1);
 			fclose(fp);
 			free(lines);
@@ -125,7 +139,9 @@ BitMap* getBitMap() {
             free(lines);
             return NULL;
         }
-		strcpy((*lines)[i], line);
+		
+		strncpy((*lines)[i], line, BITS_PER_CHAR);
+        (*lines)[i][BITS_PER_CHAR] = '\0'; // Ensure null termination
 	}
 
 	fclose(fp);

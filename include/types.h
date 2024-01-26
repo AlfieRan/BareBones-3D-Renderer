@@ -11,13 +11,14 @@
 // CONSTANTS AND MACROS =======================================================
 
 #define ASSERT(_e, ...) if (!(_e)) { fprintf(stderr, __VA_ARGS__); exit(1);}
-#define SCREEN_WIDTH 1280
-#define SCREEN_HEIGHT 720
+#define SCREEN_WIDTH 1600
+#define SCREEN_HEIGHT 900
 #define CROSSHAIR_SIZE 5
 #define ROTATION_SPEED 0.0025f
 #define MOVEMENT_SPEED 0.1f
 #define VERTICAL_FOV 1
-#define TRIANGLE_BUFFER_SIZE 1000
+#define TRIANGLE_BUFFER_SIZE 10000
+#define MAX_VIEW_DISTANCE 50000
 #define CHUNK_SIZE 100
 
 #define BITS_PER_CHAR 48
@@ -62,13 +63,13 @@ typedef struct { m4_row a,b,c,d; } m4;
 
 // Perspective Types
 typedef struct { int low, high; } ClampPosition;
-typedef struct { v2 pos; bool in_front; f64 depth; } ScreenPoint;
+typedef struct { v2 pos; bool in_front; f64 sqr_depth; } ScreenPoint;
 
 // Rendering Types
 typedef struct { u32 colour; vf3 closest_light; u32 colour_falloff; } Material;
 typedef struct { vf3 pos, dir; } Ray;
 typedef struct { f64 hor, ver; } Angle3D;
-typedef struct { vf3 a,b,c; Material material; f64 dist; bool highlighted; } Triangle;
+typedef struct { vf3 a,b,c; Material material; f64 sqr_dist; bool highlighted; } Triangle;
 typedef struct { u32 min_x, max_x, min_y, max_y; ScreenPoint a,b,c; } TriangleBoundaries;
 typedef struct { f64 w1, w2, w3; } Barycentric;
 
