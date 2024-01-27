@@ -301,7 +301,6 @@ void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
 		// Loop through the bounding rectangle
 		// LOG("[DRAW TRIANGLES] Drawing", 3);
 		LOG("[DRAW TRIANGLES] Boundaries calculated, limiting to screen", 3);
-		u32 skipped_pixels = 0;
 
 		if (boundaries.min_x < 0) {
 			boundaries.min_x = 0;
@@ -361,9 +360,7 @@ void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
                                 // draw the pixel
                                 state.pixels[pixelIndex] = colour;
                                 depthBuffer[pixelIndex] = depth;
-                            } else {
-								skipped_pixels++;
-							}
+                            }
                         }
                     }
 				}
