@@ -6,14 +6,14 @@ INCLUDE_DIR = ./include
 ADDITIONAL_FLAGS = -I/usr/local/include -L/usr/local/lib -lSDL3
 
 CC = gcc
-CFLAGS = -Wall -Wextra -I$(INCLUDE_DIR) ${ADDITIONAL_FLAGS} -O2
+CFLAGS = -Wall -Wextra -I$(INCLUDE_DIR) ${ADDITIONAL_FLAGS} -O3
 
 LDFLAGS = -lm
 
 SRC = $(wildcard $(SRC_DIR)/*.c)
 OBJ = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRC))
 
-all: run
+all: clean run
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@

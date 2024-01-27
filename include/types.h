@@ -11,8 +11,8 @@
 // CONSTANTS AND MACROS =======================================================
 
 #define ASSERT(_e, ...) if (!(_e)) { fprintf(stderr, __VA_ARGS__); exit(1);}
-#define SCREEN_WIDTH 1600
-#define SCREEN_HEIGHT 900
+#define SCREEN_WIDTH 1440
+#define SCREEN_HEIGHT 810
 #define CROSSHAIR_SIZE 5
 #define ROTATION_SPEED 0.0025f
 #define MOVEMENT_SPEED 0.1f
