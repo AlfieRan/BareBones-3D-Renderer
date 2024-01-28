@@ -243,7 +243,8 @@ TriangleBoundaries getTriangleBoundaries(State state, Triangle triangle) {
 	ScreenPoint pointB = point_to_screen(state.camera, triangle.b);
 	ScreenPoint pointC = point_to_screen(state.camera, triangle.c);
 
-	if (!pointA.in_front || !pointB.in_front || !pointC.in_front) {
+	if (!pointA.in_front && !pointB.in_front && !pointC.in_front) {
+		printf("\n[DRAW TRIANGLES] Triangle behind camera");
 		ScreenPoint tmp = (ScreenPoint) { (v2) { 0, 0 }, false, 0 };
 		return (TriangleBoundaries) { 0, 0, 0, 0, tmp, tmp, tmp };
 	}
@@ -267,6 +268,7 @@ u32 stepSize(u32 boundary_size, f64 sqr_depth) {
 }
 
 void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
+	// printf("\n[DRAW TRIANGLES] Drawing %d triangles", trianglePointer);
 	// Setup the depth buffer
 	LOG("[DRAW TRIANGLES] Setting up depth buffer", 3);
 	float depthBuffer[SCREEN_WIDTH * SCREEN_HEIGHT];
@@ -281,8 +283,10 @@ void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
 		Triangle triangle = triangles[i];
 		TriangleBoundaries boundaries = getTriangleBoundaries(state, triangle);
 		if (boundaries.max_x == 0 && boundaries.max_y == 0 && boundaries.min_x == 0 && boundaries.min_y == 0) {
+			// printf("\n[DRAW TRIANGLES] Triangle %d/%d - No boundaries", i, trianglePointer);
 			continue;
 		} else if (!boundaries.a.in_front && !boundaries.b.in_front && !boundaries.c.in_front) {
+			// printf("\n[DRAW TRIANGLES] Triangle %d/%d - Behind camera", i, trianglePointer);
 			continue;
 		}
 		
@@ -294,7 +298,10 @@ void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
 		f64 bar_dot01 = bar_v0.x * bar_v1.x + bar_v0.y * bar_v1.y;
 		f64 bar_dot11 = bar_v1.x * bar_v1.x + bar_v1.y * bar_v1.y;
 		f64 bar_denom = bar_dot00 * bar_dot11 - bar_dot01 * bar_dot01;
-		if (bar_denom == 0) {continue;}
+		if (bar_denom == 0) {
+			// printf("\n[DRAW TRIANGLES] Triangle %d/%d - Denom is 0", i, trianglePointer);
+			continue;
+		}
 		f64 bar_invDenom = 1 / bar_denom;
 		f64 maxDepthForColourFalloff = triangle.material.colour_falloff;
 		
@@ -314,10 +321,15 @@ void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
 		if (boundaries.max_y >= SCREEN_HEIGHT) {
 			boundaries.max_y = SCREEN_HEIGHT - 1;
 		}
+
+		if (boundaries.min_x > boundaries.max_x || boundaries.min_y > boundaries.max_y) {
+			// printf("\n[DRAW TRIANGLES] Triangle %d/%d - Inverted boundaries after clamping", i, trianglePointer);
+			continue;
+		}
 	
 		LOG("[DRAW TRIANGLES] Calculating boundaries", 3);
 		u64 boundary_area = (u64)(boundaries.max_x - boundaries.min_x) * (u64)(boundaries.max_y - boundaries.min_y);
-		if (boundary_area > UINT32_MAX || boundary_area > 100000) {
+		if (boundary_area > UINT32_MAX) {
 			LOG("[DRAW TRIANGLES] Boundary area too large\n", 3);
 			// printf("\n[DRAW TRIANGLES] Triangle %d/%d - Area: %d", i, trianglePointer, boundary_area);
 			continue;
@@ -326,9 +338,13 @@ void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
 		u32 step_size = stepSize(boundary_area, triangle.sqr_dist);
 		u32 half_step_size = step_size / 2;
 
-		if (boundaries.min_x + step_size > boundaries.max_x || boundaries.min_y + step_size > boundaries.max_y) { continue; }
+		if (boundaries.min_x + step_size > boundaries.max_x || boundaries.min_y + step_size > boundaries.max_y) { 
+			// printf("\n[DRAW TRIANGLES] Triangle %d/%d - Step size too large", i, trianglePointer);
+			continue;
+		}
 
 		LOG("[DRAW TRIANGLES] Looping through boundaries\n", 3);
+		printf("\n[DRAW TRIANGLES] Triangle %d/%d - boundaries: (%d/%d, %d/%d) - area %d, Step Size: %d", i, trianglePointer, boundaries.min_x, boundaries.max_x, boundaries.min_y, boundaries.max_y, boundary_area, step_size);
 		for (u32 x = boundaries.min_x + half_step_size; x <= boundaries.max_x - half_step_size; x += step_size) {
 			for (u32 y = boundaries.min_y + half_step_size; y <= boundaries.max_y - half_step_size; y += step_size) {				
 				// finish barycentric calculations
@@ -340,7 +356,8 @@ void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
 				f64 bar_w3 = 1 - bar_w1 - bar_w2;
 
 				// Check if the point is inside the triangle
-				if ((bool)((bar_w1 > 0 && bar_w2 > 0 && bar_w3 > 0) || (bar_w1 < 0 && bar_w2 < 0 && bar_w3 < 0))) {
+				const f64 epsilon = 1e-10;
+				if ((bar_w1 >= -epsilon && bar_w2 >= -epsilon && bar_w3 >= -epsilon) || (bar_w1 <= epsilon && bar_w2 <= epsilon && bar_w3 <= epsilon)) {
 					// If it is, calculate the depth
 					f64 depth = (bar_w3 * boundaries.a.sqr_depth) + (bar_w1 * boundaries.b.sqr_depth) + (bar_w2 * boundaries.c.sqr_depth);
 					f64 colourFalloff = depth <= maxDepthForColourFalloff ? 1 : maxDepthForColourFalloff / depth;

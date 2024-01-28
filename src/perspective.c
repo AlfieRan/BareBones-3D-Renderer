@@ -28,6 +28,7 @@ ScreenPoint point_to_screen(Camera camera, vf3 point) {
 	f64 d_z = (camera.rotation.x.cos * d_z_y_sub) - (camera.rotation.x.sin * cos_z_y_minus_sin_z_x);
 	
 	if (d_z == 0) {
+		printf("d_z is 0\n");
 		return (ScreenPoint) { (v2) { 0, 0 }, false, 0 };
 	}
 
