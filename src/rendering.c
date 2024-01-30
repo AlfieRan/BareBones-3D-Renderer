@@ -244,15 +244,22 @@ TriangleBoundaries getTriangleBoundaries(State state, Triangle triangle) {
 	ScreenPoint pointC = point_to_screen(state.camera, triangle.c);
 
 	if (!pointA.in_front && !pointB.in_front && !pointC.in_front) {
-		printf("\n[DRAW TRIANGLES] Triangle behind camera");
+		// printf("\n[DRAW TRIANGLES] Triangle behind camera");
+		ScreenPoint tmp = (ScreenPoint) { (v2) { 0, 0 }, false, 0 };
+		return (TriangleBoundaries) { 0, 0, 0, 0, tmp, tmp, tmp };
+
+	} else if (!in_screen(pointA.pos) && !in_screen(pointB.pos) && !in_screen(pointC.pos)) {
+		// printf("\n[DRAW TRIANGLES] Triangle not in screen");
 		ScreenPoint tmp = (ScreenPoint) { (v2) { 0, 0 }, false, 0 };
 		return (TriangleBoundaries) { 0, 0, 0, 0, tmp, tmp, tmp };
 	}
 
-	u32 minX = min3u(pointA.pos.x, pointB.pos.x, pointC.pos.x);
-	u32 maxX = max3u(pointA.pos.x, pointB.pos.x, pointC.pos.x);
-	u32 minY = min3u(pointA.pos.y, pointB.pos.y, pointC.pos.y);
-	u32 maxY = max3u(pointA.pos.y, pointB.pos.y, pointC.pos.y);
+	u32 minX = clamp(min3(pointA.pos.x, pointB.pos.x, pointC.pos.x), 0, SCREEN_WIDTH - 1);
+	u32 maxX = clamp(max3(pointA.pos.x, pointB.pos.x, pointC.pos.x), 0, SCREEN_WIDTH - 1);
+	u32 minY = clamp(min3(pointA.pos.y, pointB.pos.y, pointC.pos.y), 0, SCREEN_HEIGHT - 1);
+	u32 maxY = clamp(max3(pointA.pos.y, pointB.pos.y, pointC.pos.y), 0, SCREEN_HEIGHT - 1);
+
+	// printf("\n[DRAW TRIANGLES] Triangle Boundaries: (%d/%d, %d/%d) - (%d/%d, %d/%d, %d/%d)", minX, minY, maxX, maxY, pointA.pos.x, pointA.pos.y, pointB.pos.x, pointB.pos.y, pointC.pos.x, pointC.pos.y);
 
 	return (TriangleBoundaries) { minX, maxX, minY, maxY, pointA, pointB, pointC };
 }
@@ -268,7 +275,6 @@ u32 stepSize(u32 boundary_size, f64 sqr_depth) {
 }
 
 void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
-	// printf("\n[DRAW TRIANGLES] Drawing %d triangles", trianglePointer);
 	// Setup the depth buffer
 	LOG("[DRAW TRIANGLES] Setting up depth buffer", 3);
 	float depthBuffer[SCREEN_WIDTH * SCREEN_HEIGHT];
@@ -305,31 +311,9 @@ void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
 		f64 bar_invDenom = 1 / bar_denom;
 		f64 maxDepthForColourFalloff = triangle.material.colour_falloff;
 		
-		// Loop through the bounding rectangle
-		// LOG("[DRAW TRIANGLES] Drawing", 3);
-		LOG("[DRAW TRIANGLES] Boundaries calculated, limiting to screen", 3);
-
-		if (boundaries.min_x < 0) {
-			boundaries.min_x = 0;
-		}
-		if (boundaries.min_y < 0) {
-			boundaries.min_y = 0;
-		}
-		if (boundaries.max_x >= SCREEN_WIDTH) {
-			boundaries.max_x = SCREEN_WIDTH - 1;
-		}
-		if (boundaries.max_y >= SCREEN_HEIGHT) {
-			boundaries.max_y = SCREEN_HEIGHT - 1;
-		}
-
-		if (boundaries.min_x > boundaries.max_x || boundaries.min_y > boundaries.max_y) {
-			// printf("\n[DRAW TRIANGLES] Triangle %d/%d - Inverted boundaries after clamping", i, trianglePointer);
-			continue;
-		}
-	
 		LOG("[DRAW TRIANGLES] Calculating boundaries", 3);
 		u64 boundary_area = (u64)(boundaries.max_x - boundaries.min_x) * (u64)(boundaries.max_y - boundaries.min_y);
-		if (boundary_area > UINT32_MAX) {
+		if (boundary_area > UINT32_MAX || boundary_area == 0 || boundary_area > 250000) {
 			LOG("[DRAW TRIANGLES] Boundary area too large\n", 3);
 			// printf("\n[DRAW TRIANGLES] Triangle %d/%d - Area: %d", i, trianglePointer, boundary_area);
 			continue;
@@ -344,7 +328,7 @@ void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
 		}
 
 		LOG("[DRAW TRIANGLES] Looping through boundaries\n", 3);
-		printf("\n[DRAW TRIANGLES] Triangle %d/%d - boundaries: (%d/%d, %d/%d) - area %d, Step Size: %d", i, trianglePointer, boundaries.min_x, boundaries.max_x, boundaries.min_y, boundaries.max_y, boundary_area, step_size);
+		// printf("\n[DRAW TRIANGLES] Triangle %d/%d - boundaries: (%d/%d, %d/%d) - area %d, Step Size: %d", i, trianglePointer, boundaries.min_x, boundaries.max_x, boundaries.min_y, boundaries.max_y, boundary_area, step_size);
 		for (u32 x = boundaries.min_x + half_step_size; x <= boundaries.max_x - half_step_size; x += step_size) {
 			for (u32 y = boundaries.min_y + half_step_size; y <= boundaries.max_y - half_step_size; y += step_size) {				
 				// finish barycentric calculations
@@ -363,10 +347,10 @@ void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
 					f64 colourFalloff = depth <= maxDepthForColourFalloff ? 1 : maxDepthForColourFalloff / depth;
                     u32 colour = alterColourBrightness(triangle.material.colour, colourFalloff);
 
-					u32 minx = max(x - half_step_size, 0);
-					u32 miny = max(y - half_step_size, 0);
-					u32 maxx = min3u(x + half_step_size, boundaries.max_x, SCREEN_WIDTH - 1);
-					u32 maxy = min3u(y + half_step_size, boundaries.max_y, SCREEN_HEIGHT - 1);
+					u32 minx = max(x - half_step_size, boundaries.min_x);
+					u32 miny = max(y - half_step_size, boundaries.min_y);
+					u32 maxx = min(x + half_step_size, boundaries.max_x);
+					u32 maxy = min(y + half_step_size, boundaries.max_y);
 					// printf("\n[debug] minx: %d, miny: %d, maxx: %d, maxy: %d \n", minx, miny, maxx, maxy);
 
 					for (u32 blockX = minx; blockX < maxx; blockX++) {

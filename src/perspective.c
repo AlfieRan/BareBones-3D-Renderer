@@ -28,7 +28,7 @@ ScreenPoint point_to_screen(Camera camera, vf3 point) {
 	f64 d_z = (camera.rotation.x.cos * d_z_y_sub) - (camera.rotation.x.sin * cos_z_y_minus_sin_z_x);
 	
 	if (d_z == 0) {
-		printf("d_z is 0\n");
+		// printf("d_z is 0\n");
 		return (ScreenPoint) { (v2) { 0, 0 }, false, 0 };
 	}
 
@@ -53,6 +53,10 @@ ClampPosition clamp_position(int a, int b, int minimum, int maximum) {
 	high = clamp(high, minimum, maximum);
 
 	return (ClampPosition) { low, high };
+}
+
+bool in_screen(v2 pos) {
+	return pos.x >= 0 && pos.x < SCREEN_WIDTH && pos.y >= 0 && pos.y < SCREEN_HEIGHT;
 }
 
 vf3 cam_pos_minus_screen(Camera camera) {

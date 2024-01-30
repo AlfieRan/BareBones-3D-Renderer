@@ -5,5 +5,6 @@
 ScreenPoint point_to_screen(Camera camera, vf3 point);
 ClampPosition clamp_position(int a, int b, int minimum, int maximum);
 vf3 cam_pos_minus_screen(Camera camera);
+bool in_screen(v2 pos);
 
 #endif /* PERSPECTIVE_H__*/
