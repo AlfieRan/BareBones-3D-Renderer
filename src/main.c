@@ -236,6 +236,8 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
+		// triangles_from_plane(state, (vf3){ 0, -30, 70 }, 25, (Material){ PURPLE, state.camera.position, 2500 }, &triangles, &trianglesPointer, &numTriangles);
+
 		// debug_cube_triangles(state, (vf3){ 0, -30, 70 }, 5, &triangles, &trianglesPointer, &numTriangles);
 		// triangles_from_cube(state, (vf3){ 0, -30, 70 }, 5, (Material){ PURPLE, state.camera.position, 2500 }, &triangles, &trianglesPointer, &numTriangles);
 		// triangles_from_cube(state, (vf3){ 10, -30, 20 }, 5, (Material){ GREEN, state.camera.position, 2500 }, &triangles, &trianglesPointer, &numTriangles);
@@ -295,4 +297,5 @@ static void render() {
     SDL_SetTextureBlendMode(state.debug, SDL_BLENDMODE_BLEND);
     SDL_RenderTexture(state.renderer, state.debug, NULL, &((SDL_FRect) { 0, 0, 512, 512 }));
     SDL_RenderPresent(state.renderer);
+	SDL_SetRenderVSync(state.renderer, 1);
 }

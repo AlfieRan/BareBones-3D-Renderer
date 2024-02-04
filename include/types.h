@@ -13,7 +13,6 @@
 #define ASSERT(_e, ...) if (!(_e)) { fprintf(stderr, __VA_ARGS__); exit(1);}
 #define SCREEN_WIDTH 1440
 #define SCREEN_HEIGHT 810
-#define SCREEN_BUFFER 1.25f
 #define CROSSHAIR_SIZE 5
 #define ROTATION_SPEED 0.0025f
 #define MOVEMENT_SPEED 0.1f
@@ -22,6 +21,7 @@
 #define MAX_VIEW_DISTANCE 50000
 #define CHUNK_SIZE 100
 #define CAMERA_SCREEN_DISTANCE 1
+#define OVERDRAW 1
 
 #define BITS_PER_CHAR 48
 #define NUM_CHARS 10

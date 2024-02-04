@@ -238,6 +238,67 @@ int compareTriangles(const void* A, const void* B) {
 	}
 }
 
+v2 getCutoff(v2 in, v2 out) {
+	f64 y_dif = out.y - in.y;
+	f64 x_dif = out.x - in.x;
+
+	bool x_clip = false;
+	f64 x = 0;
+	f64 y = 0;
+
+	if (out.x < 0) {
+		x = 0;
+		x_clip = true;
+	} else if (out.x > SCREEN_WIDTH) {
+		x = SCREEN_WIDTH;
+		x_clip = true;
+	} else if (out.y < 0) {
+		y = 0;
+	} else if (out.y > SCREEN_HEIGHT) {
+		y = SCREEN_HEIGHT;
+	} else {
+		return out;
+	}
+
+	if (x_clip) {
+		f64 m = y_dif / x_dif;
+		f64 c = in.y - (m * in.x);
+		f64 y = (m * x) + c;
+		return (v2) { x, y };
+	} else {
+		f64 m = x_dif / y_dif;
+		f64 c = in.x - (m * in.y);
+		f64 x = (m * y) + c;
+		return (v2) { x, y };
+	}
+}
+
+// void getTriBoundaries(State state, Triangle triangle, TriangleBoundaries** boundaries) {
+// 	ScreenPoint a = point_to_screen(state.camera, triangle.a);
+// 	ScreenPoint b = point_to_screen(state.camera, triangle.b);
+// 	ScreenPoint c = point_to_screen(state.camera, triangle.c);
+// 	bool a_in = a.in_front && in_screen(a.pos);
+// 	bool b_in = b.in_front && in_screen(b.pos);
+// 	bool c_in = c.in_front && in_screen(c.pos);
+
+// 	if (a_in && b_in && c_in) {
+
+
+// 		TriangleBoundaries tmp = (TriangleBoundaries*) {}
+// 	}
+
+// 	v2 a_b = a.pos;
+// 	v2 a_c = a.pos;
+// 	v2 b_a = b.pos;
+// 	v2 b_c = b.pos;
+// 	v2 c_a = c.pos;
+// 	v2 c_b = c.pos;
+// 	if (!a_in) {
+
+// 	}
+
+// }
+
 TriangleBoundaries getTriangleBoundaries(State state, Triangle triangle) {
 	ScreenPoint pointA = point_to_screen(state.camera, triangle.a);
 	ScreenPoint pointB = point_to_screen(state.camera, triangle.b);
@@ -313,7 +374,7 @@ void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
 		
 		LOG("[DRAW TRIANGLES] Calculating boundaries", 3);
 		u64 boundary_area = (u64)(boundaries.max_x - boundaries.min_x) * (u64)(boundaries.max_y - boundaries.min_y);
-		if (boundary_area > UINT32_MAX || boundary_area == 0 || boundary_area > 250000) {
+		if (boundary_area > UINT32_MAX || boundary_area == 0) {
 			LOG("[DRAW TRIANGLES] Boundary area too large\n", 3);
 			// printf("\n[DRAW TRIANGLES] Triangle %d/%d - Area: %d", i, trianglePointer, boundary_area);
 			continue;
@@ -347,10 +408,10 @@ void drawTriangles(State state, Triangle* triangles, usize trianglePointer) {
 					f64 colourFalloff = depth <= maxDepthForColourFalloff ? 1 : maxDepthForColourFalloff / depth;
                     u32 colour = alterColourBrightness(triangle.material.colour, colourFalloff);
 
-					u32 minx = max(x - half_step_size, boundaries.min_x);
-					u32 miny = max(y - half_step_size, boundaries.min_y);
-					u32 maxx = min(x + half_step_size, boundaries.max_x);
-					u32 maxy = min(y + half_step_size, boundaries.max_y);
+					u32 minx = max(x - half_step_size, boundaries.min_x) - OVERDRAW;
+					u32 miny = max(y - half_step_size, boundaries.min_y) - OVERDRAW;
+					u32 maxx = min(x + half_step_size, boundaries.max_x) + OVERDRAW;
+					u32 maxy = min(y + half_step_size, boundaries.max_y) + OVERDRAW;
 					// printf("\n[debug] minx: %d, miny: %d, maxx: %d, maxy: %d \n", minx, miny, maxx, maxy);
 
 					for (u32 blockX = minx; blockX < maxx; blockX++) {

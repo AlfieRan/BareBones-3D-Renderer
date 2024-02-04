@@ -14,7 +14,7 @@ bool is_in_front_of_camera(Camera camera, vf3 point) {
 	return dot > 0;
 }
 
-ScreenPoint point_to_screen(Camera camera, vf3 point) {
+vf3 point_to_camera_positional(Camera camera, vf3 point) {
 	f64 x = point.x - camera.position.x;
 	f64 y = point.y - camera.position.y;
 	f64 z = point.z - camera.position.z;
@@ -27,23 +27,28 @@ ScreenPoint point_to_screen(Camera camera, vf3 point) {
 	f64 d_y = (camera.rotation.x.sin * d_z_y_sub) + (camera.rotation.x.cos * cos_z_y_minus_sin_z_x);
 	f64 d_z = (camera.rotation.x.cos * d_z_y_sub) - (camera.rotation.x.sin * cos_z_y_minus_sin_z_x);
 	
-	if (d_z == 0) {
-		// printf("d_z is 0\n");
+	return (vf3) { d_x, d_y, d_z };
+}
+
+ScreenPoint point_to_screen(Camera camera, vf3 point) {
+	vf3 d = point_to_camera_positional(camera, point);
+	
+	if (is_near_zero(d.z, 1e-6)) {
+		// clip to prevent divide by zero
 		return (ScreenPoint) { (v2) { 0, 0 }, false, 0 };
 	}
 
-	f64 inv_d_z = 1 / d_z;
-	f64 screen_prop_x = (camera.screen_dist * d_x) * inv_d_z;
-	f64 screen_prop_y = (camera.screen_dist * d_y) * inv_d_z;
+	f64 inv_d_z = 1 / d.z;
+	f64 screen_prop_x = (camera.screen_dist * d.x) * inv_d_z;
+	f64 screen_prop_y = (camera.screen_dist * d.y) * inv_d_z;
 
 	f64 screen_x = (screen_prop_x + 1) * HALF_SCREEN_WIDTH;
 	f64 screen_y = ((screen_prop_y * ASPECT_RATIO) + 1) * HALF_SCREEN_HEIGHT;
 
-	f64 sqr_depth = x * x + y * y + z * z;
-	bool in_front = d_z > 0;
-	// bool in_front = true;
+	f64 sqr_depth = d.x * d.x + d.y * d.y + d.z * d.z;
+	bool in_front = d.z > camera.screen_dist;
 
-	return (ScreenPoint){(v2) { screen_x, screen_y }, in_front, sqr_depth};
+	return (ScreenPoint){(v2) { f64_to_i32(screen_x), f64_to_i32(screen_y) }, in_front, sqr_depth};
 }
 
 ClampPosition clamp_position(int a, int b, int minimum, int maximum) {

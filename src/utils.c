@@ -21,6 +21,13 @@ void setLoggingLevel(u8 level) {
 	logging = level;
 }
 
+i32 f64_to_i32(f64 value) {
+    return (i32)(value + 0.5);
+}
+
+bool is_near_zero(f64 value, f64 epsilon) {
+    return fabs(value) < epsilon;
+}
 
 i32 min3(i32 a, i32 b, i32 c) {
 	i32 minAB = min(a, b);

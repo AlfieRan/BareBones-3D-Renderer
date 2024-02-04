@@ -58,6 +58,42 @@ void triangles_from_cube(State state, vf3 center, u32 radius, Material material,
 	LOG("[Cube] Increasing triangle buffer pointer", 3);
 };
 
+void triangles_from_plane(State state, vf3 center, u32 radius, Material material, Triangle** triangles, usize* trianglesPointer, u16* numTriangles) {
+	f64 sqr_dist = sqr_dist_vf3(center, state.camera.position);
+	if (sqr_dist > MAX_VIEW_DISTANCE) {
+		return;
+	}
+
+	LOG("[Plane] Marking plane points", 3);
+	vf3 a = (vf3) { center.x - radius, center.y, center.z - radius };
+	vf3 b = (vf3) { center.x - radius, center.y, center.z + radius };
+	vf3 c = (vf3) { center.x + radius, center.y, center.z - radius };
+	vf3 d = (vf3) { center.x + radius, center.y, center.z + radius };
+
+	if (*trianglesPointer + 2 >= *numTriangles) {
+		u16 newNumTriangles = *numTriangles + TRIANGLE_BUFFER_SIZE;
+		Triangle* newTriangles = (Triangle *)realloc(*triangles, sizeof(Triangle) * newNumTriangles);
+		
+		// LOG("[Cube] Checking if new array is null\n", 0);
+		if (newTriangles == NULL) {
+			LOG("Failed to allocate memory for triangles\n", 0);
+			exit(1);
+		}
+
+		*triangles = newTriangles;
+		*numTriangles = newNumTriangles;
+	}
+
+	LOG("[Plane] Allocating triangles to buffer (0/2)", 3);
+	(*triangles)[*trianglesPointer] = (Triangle) { a, b, c, material, getTriangleSqrDist(a, b, c, state.camera.position), false };
+	(*triangles)[*trianglesPointer + 1] = (Triangle) { b, c, d, material, getTriangleSqrDist(b, c, d, state.camera.position), false };
+	LOG("[Plane] Allocating triangles to buffer (2/2)", 3);
+
+	*trianglesPointer += 2;
+	LOG("[Plane] Increasing triangle buffer pointer", 3);
+};
+
+
 void debug_cube_triangles(State state, vf3 center, u32 radius, Triangle** triangles, usize* trianglesPointer, u16* numTriangles) {
 	f64 sqr_dist = sqr_dist_vf3(center, state.camera.position);
 	if (sqr_dist > MAX_VIEW_DISTANCE) {

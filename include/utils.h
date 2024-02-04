@@ -14,6 +14,9 @@ int clamp(int value, int minimum, int maximum);
 void LOG(char *message, u8 level);
 void setLoggingLevel(u8 level);
 
+i32 f64_to_i32(f64 value);
+bool is_near_zero(f64 value, f64 epsilon);
+
 i32 min3(i32 a, i32 b, i32 c);
 i32 max3(i32 a, i32 b, i32 c);
 u32 min3u(u32 a, u32 b, u32 c);
